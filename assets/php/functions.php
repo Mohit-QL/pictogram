@@ -118,9 +118,6 @@ function addUser($data)
 }
 
 
-
-
-
 // Function For Validating Login Form
 function validateLoginForm($form_data)
 {
@@ -171,4 +168,62 @@ function checkUser($login_data)
     $result['status'] = !empty($user);
 
     return $result;
+}
+
+
+//Funtion For Fetch User Data
+function getUser($user_id)
+{
+    global $db;
+    $query = "SELECT * FROM `users` WHERE id='$user_id'";
+    $run = mysqli_query($db, $query);
+    return mysqli_fetch_assoc($run);
+    return $result;
+}
+
+// Function For Verify Email
+function verifyEmail($email)
+{
+    global $db;
+
+    $query = "UPDATE `users` SET ac_status=1 WHERE email='$email'";
+    return mysqli_query($db, $query);
+}
+
+
+
+
+function resetPassword($email, $password) {
+    global $db;
+    $check_query = "SELECT id FROM users WHERE email = ?";
+    $stmt = mysqli_prepare($db, $check_query);
+    mysqli_stmt_bind_param($stmt, "s", $email);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if (mysqli_num_rows($result) == 0) {
+        return "Email not found in database";
+    }
+
+    $update_query = "UPDATE users SET password = ? WHERE email = ?";
+    $stmt = mysqli_prepare($db, $update_query);
+    
+    if (!$stmt) {
+        return "Prepare failed: " . mysqli_error($db);
+    }
+
+    $hashed_password = md5($password);
+
+    mysqli_stmt_bind_param($stmt, "ss", $hashed_password, $email);
+    $success = mysqli_stmt_execute($stmt);
+
+    if (!$success) {
+        return "Database error: " . mysqli_error($db);
+    }
+
+    if (mysqli_stmt_affected_rows($stmt) == 0) {
+        return "No rows updated - password may be the same as current";
+    }
+
+    return true;
 }
