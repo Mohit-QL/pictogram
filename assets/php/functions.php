@@ -1,4 +1,6 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 
 require_once 'config.php';
@@ -7,6 +9,7 @@ $db = mysqli_connect(hostname, username, password, database) or die("Error While
 // Function For Show Pages
 function showPage($page, $data = "")
 {
+
     include "assets/pages/$page.php";
 }
 
@@ -193,7 +196,8 @@ function verifyEmail($email)
 
 
 
-function resetPassword($email, $password) {
+function resetPassword($email, $password)
+{
     global $db;
     $check_query = "SELECT id FROM users WHERE email = ?";
     $stmt = mysqli_prepare($db, $check_query);
@@ -207,7 +211,7 @@ function resetPassword($email, $password) {
 
     $update_query = "UPDATE users SET password = ? WHERE email = ?";
     $stmt = mysqli_prepare($db, $update_query);
-    
+
     if (!$stmt) {
         return "Prepare failed: " . mysqli_error($db);
     }
@@ -226,4 +230,274 @@ function resetPassword($email, $password) {
     }
 
     return true;
+}
+
+
+function view_profile($username)
+{
+    include 'assets/pages/profile.php';
+}
+
+
+// FUNTION FOR VALIDATING UPDATE PROFILE
+
+function validateUpdateProfile($form_data, $image_data)
+{
+    $response = array();
+    $response['status'] = true;
+
+    if (!$form_data['username']) {
+        $response['msg'] = "Username is Empty!!";
+        $response['status'] = false;
+        $response['field'] = "username";
+    }
+    if (!$form_data['last_name']) {
+        $response['msg'] = "LastName is Empty!!";
+        $response['status'] = false;
+        $response['field'] = "last_name";
+    }
+    if (!$form_data['first_name']) {
+        $response['msg'] = "FirstName is Empty!!";
+        $response['status'] = false;
+        $response['field'] = "first_name";
+    }
+    if (usernameExistByOther($form_data['username'])) {
+        $response['msg'] = $form_data['username'] . " Is Already Exixst!!";
+        $response['status'] = false;
+        $response['field'] = "username";
+    }
+    if ($image_data['name']) {
+        $image = basename($image_data['name']);
+        $type = strtolower(pathinfo($image, PATHINFO_EXTENSION));
+        // $size = $image_data['size']/1024;
+        $size_mb = $image_data['size'] / 1024 / 1024;
+
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+        if (!in_array($type, $allowed_types)) {
+            $response['msg'] = "Only image files are allowed!";
+            $response['status'] = false;
+            $response['field'] = "profile_pic";
+        }
+
+        $max_size_mb = 5;
+        if ($size_mb > $max_size_mb) {
+            $uploaded_size = round($size_mb, 2);
+            $response['msg'] = "Uploaded image size is {$uploaded_size} MB. Maximum allowed size is {$max_size_mb} MB!";
+            $response['status'] = false;
+            $response['field'] = "profile_pic";
+        }
+    }
+
+    return $response;
+}
+
+
+// Function For Checking Duplicate Username By Other
+function usernameExistByOther($username)
+{
+    global $db;
+    $userid = $_SESSION['user']['id'];
+    $query = "SELECT count(*) as row FROM `users` WHERE username = '$username' AND id!='$userid'";
+    $run = mysqli_query($db, $query);
+    $result = mysqli_fetch_assoc($run);
+    return $result['row'];
+}
+
+
+function updateUser($form_data, $file_data)
+{
+    global $db;
+
+    $user_id = $_SESSION['user']['id'];
+    $first_name = mysqli_real_escape_string($db, $form_data['first_name']);
+    $last_name = mysqli_real_escape_string($db, $form_data['last_name']);
+    $username = mysqli_real_escape_string($db, $form_data['username']);
+    $password = !empty($form_data['password']) ? md5($form_data['password']) : null;
+
+    // Handle profile picture upload
+    $profile_pic_name = null;
+    if (!empty($file_data['name'])) {
+        $target_dir = "../../assets/images/Profile/";
+        $original_name = basename($file_data["name"]);
+        $ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        $profile_pic_name = uniqid("profile_") . "." . $ext;
+        $target_file = $target_dir . $profile_pic_name;
+
+        if (!move_uploaded_file($file_data["tmp_name"], $target_file)) {
+            return false;
+        }
+    }
+
+    $sql = "UPDATE users SET 
+                first_name = '$first_name', 
+                last_name = '$last_name', 
+                username = '$username', 
+                updated_at = CURRENT_TIMESTAMP()";
+
+    if ($password) {
+        $sql .= ", password = '$password'";
+    }
+
+    if ($profile_pic_name) {
+        $sql .= ", profile_pic = '$profile_pic_name'";
+    }
+
+    $sql .= " WHERE id = $user_id";
+
+    if (mysqli_query($db, $sql)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+//FUNCTIONs FOR POSTS
+
+function validatePostImage($image_data)
+{
+    $response = array();
+    $response['status'] = true;
+
+    if (!$image_data['name']) {
+        $response['msg'] = "Please select an image.";
+        $response['status'] = false;
+        $response['field'] = "post_image";
+    }
+
+    if ($image_data['name']) {
+        $image = basename($image_data['name']);
+        $type = strtolower(pathinfo($image, PATHINFO_EXTENSION));
+        $size_mb = $image_data['size'] / 1024 / 1024;
+
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+        if (!in_array($type, $allowed_types)) {
+            $response['msg'] = "Only image files are allowed!";
+            $response['status'] = false;
+            $response['field'] = "post_image";
+        }
+
+        $max_size_mb = 50;
+        if ($size_mb > $max_size_mb) {
+            $uploaded_size = round($size_mb, 2);
+            $response['msg'] = "Uploaded image size is {$uploaded_size} MB. Maximum allowed size is {$max_size_mb} MB!";
+            $response['status'] = false;
+            $response['field'] = "post_image";
+        }
+    }
+
+    return $response;
+}
+
+function addPost($text, $image)
+{
+    global $db;
+    $user_id = $_SESSION['user']['id'];
+    $post_text = mysqli_real_escape_string($db, $text['post_text']);
+    $post_pic_name = '';
+
+    if (!empty($image['name'])) {
+        $target_dir = "../../assets/images/Post/";
+        $ext = strtolower(pathinfo($image["name"], PATHINFO_EXTENSION));
+        $post_pic_name = uniqid("post_") . "." . $ext;
+        $target_file = $target_dir . $post_pic_name;
+
+        if (!move_uploaded_file($image["tmp_name"], $target_file)) {
+            return false;
+        }
+    }
+
+    $query = "INSERT INTO posts (user_id, post_img, post_text) 
+          VALUES ('$user_id', '$post_pic_name', '$post_text')";
+
+    $result = mysqli_query($db, $query);
+    if (!$result) {
+        die("Query failed: " . mysqli_error($db));
+    }
+    return $result;
+}
+
+function getPost()
+{
+    global $db;
+    $query = "SELECT posts.id, posts.user_id, posts.post_img, posts.post_text, posts.created_at, users.first_name, users.last_name, users.username, users.profile_pic FROM posts JOIN users ON users.id=posts.user_id ORDER BY id DESC";
+    $run = mysqli_query($db, $query);
+    return mysqli_fetch_all($run, true);
+    return $result;
+}
+
+
+// FUNTIONS FOR PROFILE
+
+function getUserByUsername($username)
+{
+    global $db;
+    $query = "SELECT * FROM `users` WHERE username='$username'";
+    $run = mysqli_query($db, $query);
+    return mysqli_fetch_assoc($run);
+    return $result;
+}
+
+function getPostByUserId($userid)
+{
+    global $db;
+    $query = "SELECT * FROM `posts` WHERE user_id='$userid' ORDER BY id DESC";
+    $run = mysqli_query($db, $query);
+
+    $result = [];
+    if ($run && mysqli_num_rows($run) > 0) {
+        while ($row = mysqli_fetch_assoc($run)) {
+            $result[] = $row;
+        }
+    }
+
+    return $result;
+}
+
+
+
+// FUNCTIONS FOR FOLLOW
+
+function getFollowSuggestion()
+{
+    global $db;
+    $currentUser = $_SESSION['user']['id'];
+
+    $query = "SELECT * FROM `users` WHERE id != '$currentUser' LIMIT 10";
+    $run = mysqli_query($db, $query);
+
+    $suggestions = [];
+    if ($run && mysqli_num_rows($run) > 0) {
+        while ($row = mysqli_fetch_assoc($run)) {
+            $suggestions[] = $row;
+        }
+    }
+
+    return $suggestions;
+}
+
+
+function filterFollowSuggestion()
+{
+    $list = getFollowSuggestion();
+    $filterList = [];
+
+    foreach ($list as $user) {
+        if (!isFollowed($user['id'])) {
+            $filterList[] = $user;
+        }
+    }
+
+    return $filterList;
+}
+
+
+function isFollowed($user_id)
+{
+    global $db;
+    $currentUser = $_SESSION['user']['id'];
+    $query = "SELECT 1 FROM `follow_list` WHERE follower_id = '$currentUser' AND user_id = '$user_id' LIMIT 1";
+    $run = mysqli_query($db, $query);
+
+    return mysqli_num_rows($run) > 0;
 }

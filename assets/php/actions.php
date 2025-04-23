@@ -110,7 +110,6 @@ if (isset($_GET['forgot_password'])) {
     }
 }
 
-
 // Verify Forgot Code
 if (isset($_GET['verify_code'])) {
     $usercode = $_POST['code'];
@@ -132,7 +131,6 @@ if (isset($_GET['verify_code'])) {
         exit();
     }
 }
-
 
 if (isset($_GET['change_password'])) {
     if (empty($_POST['password'])) {
@@ -172,6 +170,50 @@ if (isset($_GET['change_password'])) {
             ]
         ];
         header('Location: ../../?forgot_password');
+        exit();
+    }
+}
+
+if (isset($_GET['update_profile'])) {
+    $data = validateUpdateProfile($_POST, $_FILES['profile_pic']);
+    if ($data['status']) {
+        if (updateUser($_POST, $_FILES['profile_pic'])) {
+            $_SESSION['success'] = 'Profile Updated';
+            header("Location: ../../?edit_profile");
+            exit();
+        } else {
+            $_SESSION['error'] = 'Error while updating profile';
+            header("Location: ../../?edit_profile");
+            exit();
+        }
+    } else {
+        $_SESSION['error'] = $data;
+        $_SESSION['formdata'] = $_POST;
+        header("Location: ../../?edit_profile");
+        exit();
+    }
+}
+
+
+if (isset($_GET['add_post'])) {
+    $response = validatePostImage($_FILES['post_image']);
+
+    if ($response['status']) {
+        $post_added = addPost($_POST, $_FILES['post_image']);
+
+        if ($post_added) {
+            $_SESSION['success'] = "New post added successfully.";
+            header('Location: ../../?new_post_added');
+            exit();
+        } else {
+            $_SESSION['error'] = "Error while adding new post.";
+            header('Location: ../../');
+            exit();
+        }
+    } else {
+        $_SESSION['error'] = $response;
+        $_SESSION['formdata'] = $_POST;
+        header("Location: ../../");
         exit();
     }
 }
