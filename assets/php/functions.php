@@ -515,15 +515,38 @@ function filterFollowSuggestion()
 }
 
 
+// function isFollowed($user_id)
+// {
+//     global $db;
+//     $currentUser = $_SESSION['user']['id'];
+//     $query = "SELECT 1 FROM `follow_list` WHERE follower_id = '$currentUser' AND user_id = '$user_id' LIMIT 1";
+//     $run = mysqli_query($db, $query);
+
+//     return mysqli_num_rows($run) > 0;
+// }
+
 function isFollowed($user_id)
 {
     global $db;
     $currentUser = $_SESSION['user']['id'];
-    $query = "SELECT 1 FROM `follow_list` WHERE follower_id = '$currentUser' AND user_id = '$user_id' LIMIT 1";
-    $run = mysqli_query($db, $query);
 
-    return mysqli_num_rows($run) > 0;
+    // Use prepared statement to avoid SQL injection
+    $query = "SELECT 1 FROM `follow_list` WHERE follower_id = ? AND user_id = ? LIMIT 1";
+    $stmt = mysqli_prepare($db, $query);
+
+    // Bind parameters
+    mysqli_stmt_bind_param($stmt, "ii", $currentUser, $user_id);
+
+    // Execute the query
+    mysqli_stmt_execute($stmt);
+
+    // Get the result
+    $result = mysqli_stmt_get_result($stmt);
+
+    return mysqli_num_rows($result) > 0;
 }
+
+
 
 function getFollowersCount($user_id)
 {

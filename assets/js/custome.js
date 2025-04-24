@@ -17,10 +17,3 @@ function preview() {
 
 }
 
-// For Follow List
-
-// $(".followbtn").click(function(){
-//     var userId = $(this).data('userId');
-
-//     $(this).text(userId);
-// })

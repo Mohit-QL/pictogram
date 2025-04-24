@@ -42,12 +42,24 @@ $followingList = getFollowingList($profile['id']);
                     </a>
                 </div>
 
+                <?php if ($user['id'] != $profile['id']) { ?>
+                    <div class="d-flex gap-2 align-items-center my-1">
+                        <?php if (isFollowed($profile['id'])) { ?>
+                            <button class="btn btn-sm btn-danger follow-action" data-user-id="<?= $profile['id'] ?>" data-action="unfollow">Unfollow</button>
+                        <?php } else { ?>
+                            <button class="btn btn-sm btn-primary follow-action" data-user-id="<?= $profile['id'] ?>" data-action="follow">Follow</button>
+                        <?php } ?>
+                    </div>
+                <?php } ?>
+
+
 
 
 
 
             </div>
         </div>
+
 
     </div>
 
@@ -67,10 +79,6 @@ $followingList = getFollowingList($profile['id']);
             </div>
         <?php endif; ?>
     </div>
-
-
-
-
 
 
 </div>
@@ -177,6 +185,7 @@ $followingList = getFollowingList($profile['id']);
                             <strong><?= $follower['first_name'] . ' ' . $follower['last_name'] ?></strong>
                             <div class="text-muted">@<?= $follower['username'] ?></div>
                         </div>
+
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -218,3 +227,71 @@ $followingList = getFollowingList($profile['id']);
         </div>
     </div>
 </div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="addpost" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="max-height: 900px; max-width:800px">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body overflow-auto">
+                <img src="" id="post_image" class="w-100 rounded border mb-3" style="display: none;">
+                <form method="POST" action="assets/php/actions.php?add_post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input class="form-control" type="file" id="select_post_image" name="post_image">
+
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleFormControlTextarea1" class="form-label">Say Something</label>
+                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" placeholder="Write a caption..." name="post_text"></textarea>
+
+                    </div>
+                    <button type="submit" class="btn btn-primary">Post</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $('.follow-action').click(function() {
+        var userId = $(this).data('user-id');
+        var action = $(this).data('action');
+        var button = $(this);
+
+        $.ajax({
+            url: 'assets/php/follow_unfollow.php', // adjust this path accordingly
+            method: 'POST',
+            data: {
+                user_id: userId,
+                action: action
+            },
+            success: function(response) {
+                console.log("AJAX Response:", response);
+                if (response.trim() === "success") {
+                    if (action === 'follow') {
+                        button.text('Unfollow');
+                        button.removeClass('btn-primary').addClass('btn-danger');
+                        button.data('action', 'unfollow');
+                    } else if (action === 'unfollow') {
+                        button.text('Follow');
+                        button.removeClass('btn-danger').addClass('btn-primary');
+                        button.data('action', 'follow');
+                    }
+                } else {
+                    alert("Something went wrong! " + response);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log("AJAX Error:", error);
+                alert("AJAX request failed!");
+            }
+        });
+    });
+</script>
