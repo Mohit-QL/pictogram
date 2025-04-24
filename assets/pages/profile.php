@@ -53,10 +53,6 @@ $followingList = getFollowingList($profile['id']);
                 <?php } ?>
 
 
-
-
-
-
             </div>
         </div>
 
@@ -65,11 +61,19 @@ $followingList = getFollowingList($profile['id']);
 
 
     <h3 class="border-bottom pb-2 ">Posts</h3>
-    <?php global $profile_post; ?>
+    <?php global $profile_post;
+    // echo "<pre>";
+    // print_r($user);
+    ?>
     <div class="gallery d-flex flex-wrap gap-3 mb-4 mt-3">
         <?php if (!empty($profile_post)): ?>
             <?php foreach ($profile_post as $post): ?>
-                <img src="assets/images/Post/<?= $post['post_img'] ?>" width="400px" class="rounded" />
+                <img src="assets/images/Post/<?= $post['post_img'] ?>" class="post-image" style="cursor: pointer;" width="400" data-bs-toggle="modal"
+                    data-bs-target="#exampleModal"
+                    data-image="assets/images/Post/<?= $post['post_img'] ?>"
+                    data-username="<?= isset($user['username']) ? htmlspecialchars($user['username']) : 'Unknown' ?>"
+                    data-userhandle="<?= isset($user['username']) ? htmlspecialchars($user['username']) : 'No handle' ?>"
+                    data-userimage="<?= isset($user['profile_pic']) ? 'assets/images/Profile/' . htmlspecialchars($user['profile_pic']) : 'assets/images/default-profile.jpg' ?>" />
             <?php endforeach; ?>
         <?php else: ?>
             <div class="text-muted text-center w-100 py-5">
@@ -81,12 +85,11 @@ $followingList = getFollowingList($profile['id']);
     </div>
 
 
+
+
 </div>
 
-<!-- Button trigger modal -->
-<!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-    Launch demo modal
-</button> -->
+
 
 <!-- Modal -->
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -95,79 +98,41 @@ $followingList = getFollowingList($profile['id']);
 
             <div class="modal-body d-flex p-0">
                 <div class="col-8">
-                    <img src="img/post2.jpg" class="w-100 rounded-start">
+                    <img id="modal-post-image" src="img/post2.jpg" class="w-100 rounded-start">
                 </div>
-
-
 
                 <div class="col-4 d-flex flex-column">
                     <div class="d-flex align-items-center p-2 border-bottom">
-                        <div><img src="./img/profile.jpg" alt="" height="50" class="rounded-circle border">
-                        </div>
+                        <div><img id="modal-profile-image" src="./img/profile.jpg" alt="" height="50" style="height:50px; width:50px; object-fit:cover;" class="rounded-circle border"></div>
                         <div>&nbsp;&nbsp;&nbsp;</div>
                         <div class="d-flex flex-column justify-content-start align-items-center">
-                            <h6 style="margin: 0px;">Monu Giri</h6>
-                            <p style="margin:0px;" class="text-muted">@oyeitsmg</p>
+                            <h6 id="modal-username" style="margin: 0px;">Monu Giri</h6>
+                            <p id="modal-userhandle" style="margin: 0px;" class="text-muted">@oyeitsmg</p>
                         </div>
                     </div>
+
                     <div class="flex-fill align-self-stretch overflow-auto" style="height: 100px;">
-
-                        <div class="d-flex align-items-center p-2">
-                            <div><img src="./img/profile2.jpg" alt="" height="40" class="rounded-circle border">
-                            </div>
-                            <div>&nbsp;&nbsp;&nbsp;</div>
-                            <div class="d-flex flex-column justify-content-start align-items-start">
-                                <h6 style="margin: 0px;">@osilva</h6>
-                                <p style="margin:0px;" class="text-muted">its nice pic very good</p>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center p-2">
-                            <div><img src="./img/profile2.jpg" alt="" height="40" class="rounded-circle border">
-                            </div>
-                            <div>&nbsp;&nbsp;&nbsp;</div>
-                            <div class="d-flex flex-column justify-content-start align-items-start">
-                                <h6 style="margin: 0px;">@osilva</h6>
-                                <p style="margin:0px;" class="text-muted">its nice pic very good</p>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center p-2">
-                            <div><img src="./img/profile2.jpg" alt="" height="40" class="rounded-circle border">
-                            </div>
-                            <div>&nbsp;&nbsp;&nbsp;</div>
-                            <div class="d-flex flex-column justify-content-start align-items-start">
-                                <h6 style="margin: 0px;">@osilva</h6>
-                                <p style="margin:0px;" class="text-muted">its nice pic very good</p>
-                            </div>
-                        </div>
-
-                        <div class="d-flex align-items-center p-2">
-                            <div><img src="./img/profile2.jpg" alt="" height="40" class="rounded-circle border">
-                            </div>
-                            <div>&nbsp;&nbsp;&nbsp;</div>
-                            <div class="d-flex flex-column justify-content-start align-items-start">
-                                <h6 style="margin: 0px;">@osilva</h6>
-                                <p style="margin:0px;" class="text-muted">its nice pic very good</p>
-                            </div>
-                        </div>
-
+                        <!-- Example comment blocks can go here -->
                     </div>
+
                     <div class="input-group p-2 border-top">
-                        <input type="text" class="form-control rounded-0 border-0" placeholder="say something.."
-                            aria-label="Recipient's username" aria-describedby="button-addon2">
-                        <button class="btn btn-outline-primary rounded-0 border-0" type="button"
-                            id="button-addon2">Post</button>
+                        <input type="text" id="comment-input" class="form-control rounded-0 border-0" placeholder="Say something..." aria-label="Recipient's username">
+                        <button class="btn btn-primary rounded border-0" type="button" id="comment-submit">Comment</button>
                     </div>
+
                 </div>
-
-
-
             </div>
+
 
         </div>
     </div>
 </div>
+
+
+
+
+
+
 
 <!-- Followers Modal -->
 <div class="modal fade" id="followersModal" tabindex="-1" aria-hidden="true">
@@ -244,33 +209,7 @@ $followingList = getFollowingList($profile['id']);
 </div>
 
 
-<!-- Modal -->
-<div class="modal fade" id="addpost" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content" style="max-height: 900px; max-width:800px">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Post</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body overflow-auto">
-                <img src="" id="post_image" class="w-100 rounded border mb-3" style="display: none;">
-                <form method="POST" action="assets/php/actions.php?add_post" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <input class="form-control" type="file" id="select_post_image" name="post_image">
 
-                    </div>
-                    <div class="mb-3">
-                        <label for="exampleFormControlTextarea1" class="form-label">Say Something</label>
-                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" placeholder="Write a caption..." name="post_text"></textarea>
-
-                    </div>
-                    <button type="submit" class="btn btn-primary">Post</button>
-                </form>
-            </div>
-
-        </div>
-    </div>
-</div>
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -307,6 +246,30 @@ $followingList = getFollowingList($profile['id']);
                 console.log("AJAX Error:", error);
                 alert("AJAX request failed!");
             }
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select all images that should trigger the modal
+        const postImages = document.querySelectorAll('.gallery img');
+
+        // Modal content elements
+        const modalImage = document.getElementById('modal-post-image');
+        const modalProfileImage = document.getElementById('modal-profile-image');
+        const modalUsername = document.getElementById('modal-username');
+        const modalUserHandle = document.getElementById('modal-userhandle');
+
+        // Add event listeners to all images
+        postImages.forEach(img => {
+            img.addEventListener('click', function() {
+                // Update modal content with data attributes
+                modalImage.src = img.getAttribute('data-image');
+                modalProfileImage.src = img.getAttribute('data-userimage');
+                modalUsername.textContent = img.getAttribute('data-username');
+                modalUserHandle.textContent = img.getAttribute('data-userhandle');
+            });
         });
     });
 </script>

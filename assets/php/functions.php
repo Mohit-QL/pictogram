@@ -591,3 +591,25 @@ function getFollowingList($user_id)
     $result = mysqli_query($db, $query);
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
+
+function checkLike($post_id)
+{
+    global $db;
+    $user_id = $_SESSION['user']['id'];
+    $query = "SELECT count(*) AS ROW FROM `likes` WHERE user_id = '$user_id' AND post_id = '$post_id' ";
+    $run = mysqli_query($db, $query);
+    $user = mysqli_fetch_assoc($run);
+
+    $result['user'] = $user ?? [];
+    $result['status'] = !empty($user);
+
+    return $result;
+}
+
+function like($post_id)
+{
+    global $db;
+    $user_id = $_SESSION['user']['id'];
+    $query = "INSERT INTO `likes`(`post_id`, `user_id`) VALUES ('$post_id','$user_id')";
+    return mysqli_query($db, $query);
+}

@@ -26,7 +26,7 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                     </div>
                     <img src="assets/images/Post/<?php echo $post['post_img'] ?>" class="" alt="Post Image" style="object-fit: contain; width: 100%;">
                     <h4 style="font-size: x-larger" class="p-2 border-bottom">
-                        <i class="bi bi-heart"></i>&nbsp;&nbsp;<i class="bi bi-chat-left"></i>
+                        <i class="bi bi-heart like_btn" style="cursor: pointer;" data-post-id="<?php echo $post['id'] ?>"></i>&nbsp;&nbsp;<i class="bi bi-chat-left "></i>
                     </h4>
 
                     <?php if (!empty($post['post_text'])) { ?>
@@ -65,6 +65,7 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
             background-color: #0b5ed7;
         }
     </style>
+
     <div class="col-4 mt-4 p-3">
 
         <a href="?u=<?php echo $user['username']; ?>" class="d-flex align-items-center text-decoration-none text-black p-2">
@@ -108,6 +109,7 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+
 <!-- Your Follow AJAX Script -->
 <script>
     $('.follow-btn').click(function() {
@@ -130,6 +132,34 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
             },
             error: function(xhr, status, error) {
                 console.log("AJAX Error:", error);
+                alert("AJAX request failed!");
+            }
+        });
+    });
+
+    $('.like_btn').click(function() {
+        var postId = $(this).data('post-id');
+        var button = $(this);
+        $(button).attr('disabled', true);
+
+        $.ajax({
+            url: 'assets/php/ajax.php?like',
+            method: 'POST',
+            data: {
+                post_id: postId
+            },
+            success: function(response) {
+                console.log("AJAX Response:", response);
+                $(button).attr('disabled', false);
+
+                let res = JSON.parse(response);
+                if (res.status) {
+                    // Whether liked now or previously, always show filled heart
+                    $(button).removeClass('bi-heart').addClass('bi-heart-fill').css('color', 'red');
+                }
+            },
+            error: function() {
+                $(button).attr('disabled', false);
                 alert("AJAX request failed!");
             }
         });
