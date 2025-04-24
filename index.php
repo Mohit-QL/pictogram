@@ -11,7 +11,7 @@ if (isset($_GET['newfp'])) {
 }
 if (isset($_SESSION['auth'])) {
     $user = getUser($_SESSION['user']['id']);
-    $posts = getPost();
+    $posts = filterPost();
     $follow_suggestion = filterFollowSuggestion();
 }
 
@@ -40,7 +40,8 @@ if (isset($_SESSION['auth']) && $user['ac_status'] == 1 && !$pagecount) {
         showPage('user_not_found');
     } else {
         $profile_post = getPostByUserId($profile['id']);
-
+        $profile['followers'] = getFollowersCount($profile['id']);
+        $profile['following'] = getFollowingCount($profile['id']);
         showPage('header', ['page_title' => "Pictogram - {$profile['first_name']} {$profile['last_name']}"]);
         showPage('nav');
         showPage('profile');

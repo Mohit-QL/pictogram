@@ -279,7 +279,7 @@ function validateUpdateProfile($form_data, $image_data)
             $response['field'] = "profile_pic";
         }
 
-        $max_size_mb = 5;
+        $max_size_mb = 50;
         if ($size_mb > $max_size_mb) {
             $uploaded_size = round($size_mb, 2);
             $response['msg'] = "Uploaded image size is {$uploaded_size} MB. Maximum allowed size is {$max_size_mb} MB!";
@@ -426,6 +426,29 @@ function getPost()
     return $result;
 }
 
+function getWallPost()
+{
+    global $db;
+    $query = "SELECT posts.id, posts.user_id, posts.post_img, posts.post_text, posts.created_at, users.first_name, users.last_name, users.username, users.profile_pic FROM posts JOIN users ON users.id=posts.user_id ORDER BY id DESC";
+    $run = mysqli_query($db, $query);
+    return mysqli_fetch_all($run, true);
+    return $result;
+}
+
+function filterPost()
+{
+    $list = getPost();
+    $filterList = [];
+    foreach ($list as $post) {
+        if (isFollowed($post['user_id']) || $post['user_id'] == $_SESSION['user']['id']) {
+            $filterList[] = $post;
+        }
+    }
+
+    return $filterList;
+}
+
+
 
 // FUNTIONS FOR PROFILE
 
@@ -500,4 +523,48 @@ function isFollowed($user_id)
     $run = mysqli_query($db, $query);
 
     return mysqli_num_rows($run) > 0;
+}
+
+function getFollowersCount($user_id)
+{
+    global $db;
+
+    $query = "SELECT COUNT(*) as count FROM follow_list WHERE user_id = '$user_id'";
+    $result = mysqli_query($db, $query);
+    $data = mysqli_fetch_assoc($result);
+
+    return $data['count'];
+}
+
+function getFollowingCount($user_id)
+{
+    global $db;
+
+    $query = "SELECT COUNT(*) as count FROM follow_list WHERE follower_id = '$user_id'";
+    $result = mysqli_query($db, $query);
+    $data = mysqli_fetch_assoc($result);
+
+    return $data['count'];
+}
+
+function getFollowersList($user_id)
+{
+    global $db;
+
+    $query = "SELECT users.* FROM follow_list 
+              JOIN users ON follow_list.follower_id = users.id 
+              WHERE follow_list.user_id = '$user_id'";
+    $result = mysqli_query($db, $query);
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
+function getFollowingList($user_id)
+{
+    global $db;
+
+    $query = "SELECT users.* FROM follow_list 
+              JOIN users ON follow_list.user_id = users.id 
+              WHERE follow_list.follower_id = '$user_id'";
+    $result = mysqli_query($db, $query);
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }

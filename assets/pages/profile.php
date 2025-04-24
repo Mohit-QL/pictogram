@@ -1,6 +1,11 @@
 <?php
 global $profile;
+global $user;
 global $profile_post;
+$followersList = getFollowersList($profile['id']);
+$followingList = getFollowingList($profile['id']);
+
+
 
 ?>
 
@@ -13,48 +18,56 @@ global $profile_post;
             <div class="d-flex flex-column">
                 <div class="d-flex gap-5 align-items-center">
                     <span style="font-size: xx-large;"> <?= $profile['first_name'] . ' ' . $profile['last_name']; ?></span>
-                    <div class="dropdown">
-                        <span class="" style="font-size:xx-large" type="button" id="dropdownMenuButton1"
-                            data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots"></i> </span>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-chat-fill"></i> Message</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-x-circle-fill"></i> Block</a></li>
-                        </ul>
-                    </div>
+                    <?php if ($user['id'] !== $profile['id']) { ?>
+                        <div class="dropdown">
+                            <span class="" style="font-size:xx-large" type="button" id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots"></i> </span>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-chat-fill"></i> Message</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-x-circle-fill"></i> Block</a></li>
+                            </ul>
+                        </div>
+                    <?php } ?>
                 </div>
                 <span style="font-size: larger;" class="text-secondary">@<?= $profile['username'] ?></span>
                 <div class="d-flex gap-2 align-items-center my-3">
-
-                    <a class="btn btn-sm btn-primary"><i class="bi bi-file-post-fill"></i> 22 Posts</a>
-                    <a class="btn btn-sm btn-primary"><i class="bi bi-people-fill"></i> 100 Followers</a>
-                    <a class="btn btn-sm btn-primary"><i class="bi bi-person-fill"></i> 50 Following</a>
-
-
+                    <a class="btn btn-sm btn-primary">
+                        <i class="bi bi-file-post-fill"></i> <?= count($profile_post) ?> Posts
+                    </a>
+                    <a class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#followersModal">
+                        <i class="bi bi-people-fill"></i> <?= getFollowersCount($profile['id']) ?> Followers
+                    </a>
+                    <a class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#followingModal">
+                        <i class="bi bi-person-fill"></i> <?= getFollowingCount($profile['id']) ?> Following
+                    </a>
                 </div>
 
-                <div class="d-flex gap-2 align-items-center my-1">
-
-                    <a class="btn btn-sm btn-danger">Unfollow</a>
 
 
 
-                </div>
+
             </div>
         </div>
 
-
     </div>
 
 
-    <h3 class="border-bottom">Posts</h3>
+    <h3 class="border-bottom pb-2 ">Posts</h3>
     <?php global $profile_post; ?>
-    <div class="gallery d-flex flex-wrap justify-content-center gap-2 mb-4">
-
-        <?php foreach ($profile_post as $post): ?>
-            <img src="assets/images/Post/<?= $post['post_img'] ?>" width="400px" class="rounded" />
-        <?php endforeach; ?>
-
+    <div class="gallery d-flex flex-wrap gap-3 mb-4 mt-3">
+        <?php if (!empty($profile_post)): ?>
+            <?php foreach ($profile_post as $post): ?>
+                <img src="assets/images/Post/<?= $post['post_img'] ?>" width="400px" class="rounded" />
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="text-muted text-center w-100 py-5">
+                <i class="bi bi-image" style="font-size: 2rem;"></i><br>
+                <strong>No posts to show yet.</strong><br>
+                Start sharing your moments!
+            </div>
+        <?php endif; ?>
     </div>
+
 
 
 
@@ -63,9 +76,9 @@ global $profile_post;
 </div>
 
 <!-- Button trigger modal -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+<!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
     Launch demo modal
-</button>
+</button> -->
 
 <!-- Modal -->
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -144,6 +157,64 @@ global $profile_post;
 
             </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- Followers Modal -->
+<div class="modal fade" id="followersModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Followers</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <?php foreach ($followersList as $follower): ?>
+                    <div class="d-flex align-items-center mb-2">
+                        <img src="assets/images/Profile/<?= $follower['profile_pic'] ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                        <div class="ms-2">
+                            <strong><?= $follower['first_name'] . ' ' . $follower['last_name'] ?></strong>
+                            <div class="text-muted">@<?= $follower['username'] ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Following Modal -->
+<div class="modal fade" id="followingModal" tabindex="-1" aria-labelledby="followingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Following</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <?php if (!empty($followingList)): ?>
+                    <?php foreach ($followingList as $following): ?>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="assets/images/Profile/<?= $following['profile_pic'] ?>" alt="" class="rounded-circle" style="height: 40px; width: 40px; object-fit: cover;">
+                                <div>
+                                    <strong><?= $following['first_name'] . ' ' . $following['last_name'] ?></strong><br>
+                                    <small class="text-muted">@<?= $following['username'] ?></small>
+                                </div>
+                            </div>
+                            <?php if ($user['id'] === $_SESSION['user']['id']): ?>
+                                <form action="assets/php/unfollow.php" method="POST">
+                                    <input type="hidden" name="user_id" value="<?= $following['id'] ?>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Unfollow</button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted">Not following anyone yet.</p>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
