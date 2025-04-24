@@ -1,25 +1,23 @@
 <?php
 include 'functions.php';
 
-$response = [];
 
-if (isset($_GET['like']) && isset($_POST['post_id'])) {
-    $post_id = intval($_POST['post_id']);
-    $check = checkLike($post_id);
+if (isset($_POST['post_id'])) {
+    $post_id = $_POST['post_id'];
+    $user_id = $_SESSION['user']['id'];
 
-    if ($check['user']['ROW'] == 0) {
-        if (like($post_id)) {
-            $response['status'] = true;
-            $response['liked'] = true;
-        } else {
-            $response['status'] = false;
-        }
-    } else {
-        $response['status'] = true;
-        $response['liked'] = false;
+    if (isset($_GET['like'])) {
+        $stmt = $db->prepare("INSERT INTO likes (post_id, user_id) VALUES (?, ?)");
+        $stmt->bind_param("ii", $post_id, $user_id);
+        $stmt->execute();
+
+        echo json_encode(['status' => true, 'liked' => true]);
+    } elseif (isset($_GET['unlike'])) {
+        $stmt = $db->prepare("DELETE FROM likes WHERE post_id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $post_id, $user_id);
+        $stmt->execute();
+
+        echo json_encode(['status' => true, 'liked' => false]);
     }
-
-    echo json_encode($response);
-} else {
-    echo json_encode(['status' => false, 'error' => 'Invalid request']);
 }
+?>

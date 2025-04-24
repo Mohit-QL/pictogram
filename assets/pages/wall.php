@@ -4,20 +4,23 @@ global $posts;
 global $follow_suggestion;
 $name = $user['first_name'] . ' ' . $user['last_name'];
 
+
+
 ?>
 
 <div class="container col-9 rounded-0 d-flex justify-content-between">
     <div class="col-8">
-
         <?php
         showError('post_image');
-
         if (!empty($posts)) {
             foreach ($posts as $post) {
+                $check = checkLike($post['id']);
+                $alreadyLiked = ($check['user']['ROW'] ?? 0) > 0;
         ?>
                 <div class="card mt-4">
                     <div class="card-title d-flex justify-content-between align-items-center">
-                        <a href="?u=<?php echo $post['username']; ?>" class="d-flex align-items-center text-decoration-none text-black p-2"> <img src="assets/images/Profile/<?php echo $post['profile_pic'] ?>" alt="" height="30" style="height: 30px; width:30px; object-fit:cover;" class="rounded-circle border">
+                        <a href="?u=<?php echo $post['username']; ?>" class="d-flex align-items-center text-decoration-none text-black p-2">
+                            <img src="assets/images/Profile/<?php echo $post['profile_pic'] ?>" alt="" height="30" style="height: 30px; width:30px; object-fit:cover;" class="rounded-circle border">
                             &nbsp;&nbsp;<?php echo $post['first_name'] ?> <?php echo $post['last_name'] ?>
                         </a>
                         <div class="p-2">
@@ -26,19 +29,18 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                     </div>
                     <img src="assets/images/Post/<?php echo $post['post_img'] ?>" class="" alt="Post Image" style="object-fit: contain; width: 100%;">
                     <h4 style="font-size: x-larger" class="p-2 border-bottom">
-                        <i class="bi bi-heart like_btn" style="cursor: pointer;" data-post-id="<?php echo $post['id'] ?>"></i>&nbsp;&nbsp;<i class="bi bi-chat-left "></i>
+                        <i class="bi <?= $alreadyLiked ? 'bi-heart-fill' : 'bi-heart' ?> like_btn"
+                            data-post-id="<?= $post['id'] ?>"
+                            style="cursor: pointer; <?= $alreadyLiked ? 'color: red;' : '' ?>"></i>
                     </h4>
-
                     <?php if (!empty($post['post_text'])) { ?>
                         <div class="card-body">
                             <?php echo $post['post_text'] ?>
                         </div>
                     <?php } ?>
-
                     <div class="input-group p-2 <?php echo !empty($post['post_text']) ? 'border-top' : ''; ?>">
-                        <input type="text" class="form-control rounded-0 border-0" placeholder="Say something..."
-                            aria-label="Recipient's username" aria-describedby="button-addon2">
-                        <button class="btn btn-outline-primary rounded-0 border-0" type="button" id="button-addon2">Post</button>
+                        <input type="text" class="form-control rounded-0 border-0" placeholder="Say something...">
+                        <button class="btn btn-outline-primary rounded-0 border-0" type="button">Post</button>
                     </div>
                 </div>
         <?php
@@ -47,8 +49,8 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
             echo '<div class="alert alert-info mt-4">No posts to show yet. Follow someone or create your own post!</div>';
         }
         ?>
-
     </div>
+
 
     <style>
         .follow-btn {
@@ -137,29 +139,72 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
         });
     });
 
-    $('.like_btn').click(function() {
+    // $(document).on('click', '.like_btn', function() {
+    //     var postId = $(this).data('post-id');
+    //     var button = $(this);
+    //     var isLiked = button.hasClass('bi-heart-fill');
+
+    //     var url = isLiked ? 'assets/php/ajax.php?unlike' : 'assets/php/ajax.php?like';
+
+    //     button.attr('disabled', true);
+
+    //     $.ajax({
+    //         url: url,
+    //         method: 'POST',
+    //         data: {
+    //             post_id: postId
+    //         },
+    //         success: function(response) {
+    //             console.log("AJAX Response:", response);
+    //             button.attr('disabled', false);
+
+    //             let res = JSON.parse(response);
+    //             if (res.status) {
+    //                 if (res.liked) {
+    //                     button.removeClass('bi-heart').addClass('bi-heart-fill').css('color', 'red');
+    //                 } else {
+    //                     button.removeClass('bi-heart-fill').addClass('bi-heart').css('color', '');
+    //                 }
+    //             }
+    //         },
+    //         error: function() {
+    //             button.attr('disabled', false);
+    //             alert("AJAX request failed!");
+    //         }
+    //     });
+    // });
+
+    $(document).on('click', '.like_btn', function() {
         var postId = $(this).data('post-id');
         var button = $(this);
-        $(button).attr('disabled', true);
+        var isLiked = button.hasClass('bi-heart-fill'); 
+
+        var url = isLiked ? 'assets/php/ajax.php?unlike' : 'assets/php/ajax.php?like'; 
+
+        button.attr('disabled', true); 
 
         $.ajax({
-            url: 'assets/php/ajax.php?like',
+            url: url,
             method: 'POST',
             data: {
-                post_id: postId
+                post_id: postId 
             },
             success: function(response) {
-                console.log("AJAX Response:", response);
-                $(button).attr('disabled', false);
+                button.attr('disabled', false); 
 
                 let res = JSON.parse(response);
+
                 if (res.status) {
-                    // Whether liked now or previously, always show filled heart
-                    $(button).removeClass('bi-heart').addClass('bi-heart-fill').css('color', 'red');
+                   
+                    if (res.liked) {
+                        button.removeClass('bi-heart').addClass('bi-heart-fill').css('color', 'red'); 
+                    } else {
+                        button.removeClass('bi-heart-fill').addClass('bi-heart').css('color', '');
+                    }
                 }
             },
             error: function() {
-                $(button).attr('disabled', false);
+                button.attr('disabled', false);
                 alert("AJAX request failed!");
             }
         });

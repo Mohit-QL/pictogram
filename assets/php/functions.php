@@ -592,24 +592,37 @@ function getFollowingList($user_id)
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
-function checkLike($post_id)
+
+function checkLike($post_id, $user_id = null)
 {
     global $db;
-    $user_id = $_SESSION['user']['id'];
-    $query = "SELECT count(*) AS ROW FROM `likes` WHERE user_id = '$user_id' AND post_id = '$post_id' ";
-    $run = mysqli_query($db, $query);
-    $user = mysqli_fetch_assoc($run);
 
-    $result['user'] = $user ?? [];
-    $result['status'] = !empty($user);
+    if (!$user_id && isset($_SESSION['user']['id'])) {
+        $user_id = $_SESSION['user']['id'];
+    }
 
-    return $result;
+    $stmt = $db->prepare("SELECT COUNT(*) AS ROW FROM likes WHERE post_id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $post_id, $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+
+    return ['user' => $row];
 }
+
 
 function like($post_id)
 {
     global $db;
     $user_id = $_SESSION['user']['id'];
     $query = "INSERT INTO `likes`(`post_id`, `user_id`) VALUES ('$post_id','$user_id')";
+    return mysqli_query($db, $query);
+}
+
+function unlike($post_id)
+{
+    global $db;
+    $user_id = $_SESSION['user']['id'];
+    $query = "DELETE FROM `likes` WHERE user_id = '$user_id' AND post_id = '$post_id'";
     return mysqli_query($db, $query);
 }
