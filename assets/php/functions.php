@@ -626,3 +626,14 @@ function unlike($post_id)
     $query = "DELETE FROM `likes` WHERE user_id = '$user_id' AND post_id = '$post_id'";
     return mysqli_query($db, $query);
 }
+
+function getLikesCount($post_id)
+{
+    global $db;
+    $stmt = $db->prepare("SELECT COUNT(*) AS total FROM likes WHERE post_id = ?");
+    $stmt->bind_param("i", $post_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row['total'];
+}

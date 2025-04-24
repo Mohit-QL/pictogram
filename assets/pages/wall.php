@@ -16,6 +16,7 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
             foreach ($posts as $post) {
                 $check = checkLike($post['id']);
                 $alreadyLiked = ($check['user']['ROW'] ?? 0) > 0;
+                $post['likes_count'] = getLikesCount($post['id']);
         ?>
                 <div class="card mt-4">
                     <div class="card-title d-flex justify-content-between align-items-center">
@@ -28,10 +29,14 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                         </div>
                     </div>
                     <img src="assets/images/Post/<?php echo $post['post_img'] ?>" class="" alt="Post Image" style="object-fit: contain; width: 100%;">
-                    <h4 style="font-size: x-larger" class="p-2 border-bottom">
-                        <i class="bi <?= $alreadyLiked ? 'bi-heart-fill' : 'bi-heart' ?> like_btn"
+                    <h4 style="font-size: x-larger" class="p-2 border-bottom d-flex align-items-center">
+                        <i class="d-block me-3 bi <?= $alreadyLiked ? 'bi-heart-fill' : 'bi-heart' ?> like_btn"
                             data-post-id="<?= $post['id'] ?>"
                             style="cursor: pointer; <?= $alreadyLiked ? 'color: red;' : '' ?>"></i>
+                        <span class="likes-count fs-5 d-block" data-post-id="<?= $post['id'] ?>">
+                            <?= $post['likes_count'] ?? 0 ?> Likes
+                        </span>
+
                     </h4>
                     <?php if (!empty($post['post_text'])) { ?>
                         <div class="card-body">
@@ -177,30 +182,30 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
     $(document).on('click', '.like_btn', function() {
         var postId = $(this).data('post-id');
         var button = $(this);
-        var isLiked = button.hasClass('bi-heart-fill'); 
+        var isLiked = button.hasClass('bi-heart-fill');
 
-        var url = isLiked ? 'assets/php/ajax.php?unlike' : 'assets/php/ajax.php?like'; 
+        var url = isLiked ? 'assets/php/ajax.php?unlike' : 'assets/php/ajax.php?like';
 
-        button.attr('disabled', true); 
+        button.attr('disabled', true);
 
         $.ajax({
             url: url,
             method: 'POST',
             data: {
-                post_id: postId 
+                post_id: postId
             },
             success: function(response) {
-                button.attr('disabled', false); 
-
+                button.attr('disabled', false);
                 let res = JSON.parse(response);
 
                 if (res.status) {
-                   
                     if (res.liked) {
-                        button.removeClass('bi-heart').addClass('bi-heart-fill').css('color', 'red'); 
+                        button.removeClass('bi-heart').addClass('bi-heart-fill').css('color', 'red');
                     } else {
                         button.removeClass('bi-heart-fill').addClass('bi-heart').css('color', '');
                     }
+
+                    $('.likes-count[data-post-id="' + postId + '"]').text(res.likes_count + ' Likes');
                 }
             },
             error: function() {

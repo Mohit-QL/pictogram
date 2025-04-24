@@ -1,7 +1,6 @@
 <?php
 include 'functions.php';
 
-
 if (isset($_POST['post_id'])) {
     $post_id = $_POST['post_id'];
     $user_id = $_SESSION['user']['id'];
@@ -11,13 +10,20 @@ if (isset($_POST['post_id'])) {
         $stmt->bind_param("ii", $post_id, $user_id);
         $stmt->execute();
 
-        echo json_encode(['status' => true, 'liked' => true]);
+        echo json_encode([
+            'status' => true,
+            'liked' => true,
+            'likes_count' => getLikesCount($post_id)
+        ]);
     } elseif (isset($_GET['unlike'])) {
         $stmt = $db->prepare("DELETE FROM likes WHERE post_id = ? AND user_id = ?");
         $stmt->bind_param("ii", $post_id, $user_id);
         $stmt->execute();
 
-        echo json_encode(['status' => true, 'liked' => false]);
+        echo json_encode([
+            'status' => true,
+            'liked' => false,
+            'likes_count' => getLikesCount($post_id)
+        ]);
     }
 }
-?>
