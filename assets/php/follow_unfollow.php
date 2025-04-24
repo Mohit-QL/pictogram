@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && isset($
             mysqli_stmt_close($stmt);
         }
     } elseif ($action == 'unfollow') {
--        $query = "DELETE FROM follow_list WHERE follower_id = ? AND user_id = ?";
+        $query = "DELETE FROM follow_list WHERE follower_id = ? AND user_id = ?";
         $stmt = mysqli_prepare($db, $query);
         mysqli_stmt_bind_param($stmt, "ii", $currentUser, $profileId);
         if (mysqli_stmt_execute($stmt)) {

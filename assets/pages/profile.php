@@ -178,16 +178,31 @@ $followingList = getFollowingList($profile['id']);
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <?php foreach ($followersList as $follower): ?>
-                    <div class="d-flex align-items-center mb-2">
-                        <img src="assets/images/Profile/<?= $follower['profile_pic'] ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
-                        <div class="ms-2">
-                            <strong><?= $follower['first_name'] . ' ' . $follower['last_name'] ?></strong>
-                            <div class="text-muted">@<?= $follower['username'] ?></div>
+                <?php if (!empty($followersList)): ?>
+                    <?php foreach ($followersList as $follower): ?>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="assets/images/Profile/<?= $follower['profile_pic'] ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                                <div class="ms-2">
+                                    <strong><?= $follower['first_name'] . ' ' . $follower['last_name'] ?></strong>
+                                    <div class="text-muted">@<?= $follower['username'] ?></div>
+                                </div>
+                            </div>
+                            <?php if ($user['id'] != $follower['id']) { ?>
+                                <div class="d-flex gap-2 align-items-center my-1">
+                                    <?php if (isFollowed($follower['id'])) { ?>
+                                        <button class="btn btn-sm btn-danger follow-action" data-user-id="<?= $follower['id'] ?>" data-action="unfollow">Unfollow</button>
+                                    <?php } else { ?>
+                                        <button class="btn btn-sm btn-primary follow-action" data-user-id="<?= $follower['id'] ?>" data-action="follow">Follow</button>
+                                    <?php } ?>
+                                </div>
+                            <?php } ?>
                         </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted">Not following anyone yet.</p>
+                <?php endif; ?>
 
-                    </div>
-                <?php endforeach; ?>
             </div>
         </div>
     </div>
