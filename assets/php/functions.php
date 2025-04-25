@@ -637,3 +637,34 @@ function getLikesCount($post_id)
     $row = $result->fetch_assoc();
     return $row['total'];
 }
+
+function getPostLikes($postId)
+{
+    global $db;
+
+    $stmt = $db->prepare("SELECT users.id, users.first_name, users.last_name, users.username, users.profile_pic 
+                          FROM likes 
+                          JOIN users ON likes.user_id = users.id 
+                          WHERE likes.post_id = ?");
+
+    $stmt->bind_param("i", $postId);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+function getPostComments($postId)
+{
+    global $db;
+    $stmt = $db->prepare("
+        SELECT c.*, u.first_name, u.last_name, u.profile_pic 
+        FROM comments c 
+        JOIN users u ON c.user_id = u.id 
+        WHERE c.post_id = ? 
+        ORDER BY c.created_at DESC
+    ");
+    $stmt->bind_param("i", $postId);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+}

@@ -4,6 +4,11 @@ global $posts;
 global $follow_suggestion;
 $name = $user['first_name'] . ' ' . $user['last_name'];
 
+// echo "<pre>";
+// print_r($user);
+// print_r("ID = " . $user['id']);
+// die();
+
 
 
 ?>
@@ -17,6 +22,7 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                 $check = checkLike($post['id']);
                 $alreadyLiked = ($check['user']['ROW'] ?? 0) > 0;
                 $post['likes_count'] = getLikesCount($post['id']);
+                $likes = getPostLikes($post['id']);
         ?>
                 <div class="card mt-4">
                     <div class="card-title d-flex justify-content-between align-items-center">
@@ -29,23 +35,114 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                         </div>
                     </div>
                     <img src="assets/images/Post/<?php echo $post['post_img'] ?>" class="" alt="Post Image" style="object-fit: contain; width: 100%;">
-                    <h4 style="font-size: x-larger" class="p-2 border-bottom d-flex align-items-center">
+                    <h4 style="font-size: x-larger" class="p-2 m-0 d-flex align-items-center">
                         <i class="d-block me-3 bi <?= $alreadyLiked ? 'bi-heart-fill' : 'bi-heart' ?> like_btn"
                             data-post-id="<?= $post['id'] ?>"
                             style="cursor: pointer; <?= $alreadyLiked ? 'color: red;' : '' ?>"></i>
-                        <span class="likes-count fs-5 d-block" data-post-id="<?= $post['id'] ?>">
-                            <?= $post['likes_count'] ?? 0 ?> Likes
-                        </span>
-
+                        <i class="d-block bi bi-chat" style="margin-top: -4px;"></i>
                     </h4>
+                    <span class="likes-count d-block border-bottom px-2"
+                        style="font-size: 17px; letter-spacing: 1px;"
+                        data-bs-toggle="modal"
+                        data-bs-target="#likes<?php echo $post['id']; ?>"
+                        data-post-id="<?php echo $post['id']; ?>">
+                        <?= $post['likes_count'] ?? 0 ?> likes
+                    </span>
+
                     <?php if (!empty($post['post_text'])) { ?>
                         <div class="card-body">
                             <?php echo $post['post_text'] ?>
                         </div>
                     <?php } ?>
-                    <div class="input-group p-2 <?php echo !empty($post['post_text']) ? 'border-top' : ''; ?>">
-                        <input type="text" class="form-control rounded-0 border-0" placeholder="Say something...">
-                        <button class="btn btn-outline-primary rounded-0 border-0" type="button">Post</button>
+
+                    <!-- Comment Form -->
+                    <form action="assets/php/add_comment.php" method="POST" class="input-group p-2 <?php echo !empty($post['post_text']) ? 'border-top' : ''; ?>">
+                        <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+                        <input type="text" name="comment" class="form-control rounded-0 border-0 border-bottom mb-3 pb-3" placeholder="Say something..." required>
+                        <button class="btn btn-outline-primary rounded-0 border-0 border-bottom fs-5 ms-3 mb-3 px-5 py-2" type="submit" name="submit_comment">Post</button>
+                    </form>
+                    <style>
+                        .show-more-comments {
+                            display: inline-block;
+                            margin-top: 5px;
+                            cursor: pointer;
+                            font-size: 14px;
+                        }
+                    </style>
+                    <!-- Comment Display Section -->
+                    <?php
+                    $comments = getPostComments($post['id']);
+                    $totalComments = count($comments);
+                    $maxVisible = 1;
+                    ?>
+
+                    <?php if (!empty($comments)): ?>
+                        <div class="px-3 pb-2 comment-section" id="comment-section-<?= $post['id'] ?>">
+                            <?php foreach ($comments as $index => $c): ?>
+                                <div class="d-flex align-items-start mb-2 border-bottom mb-2 pb-2 comment <?= $index >= $maxVisible ? 'd-none' : '' ?>" data-post-id="<?= $post['id'] ?>" data-comment-id="<?= $c['id'] ?>">
+                                    <img src="assets/images/Profile/<?= $c['profile_pic'] ?>" class="rounded-circle me-4 mt-2" width="30" height="30" style="object-fit: cover;">
+                                    <div>
+                                        <strong><?= $c['first_name'] . ' ' . $c['last_name'] ?></strong>
+                                        <p class="m-0"><?= htmlspecialchars($c['comment']) ?></p>
+                                        <small class="text-muted"><?= date("d M Y, H:i", strtotime($c['created_at'])) ?></small>
+                                    </div>
+
+                                    <?php if ($user['id'] == $c['user_id']) { ?>
+                                        <div class="ms-auto pt-4 pe-3">
+                                            <a href="javascript:void(0);" class="text-danger ms-2 delete-comment text-decoration-none" data-comment-id="<?= $c['id'] ?>" data-post-id="<?= $post['id'] ?>">Delete</a>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            <?php endforeach; ?>
+
+                            <!-- Show More / Show Less Toggle -->
+                            <?php if ($totalComments > $maxVisible): ?>
+                                <div class="text-center mt-3">
+                                    <a href="javascript:void(0);" class="text-primary toggle-comments text-decoration-none text-black" data-post-id="<?= $post['id'] ?>" data-show-more="true">Show more...</a>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+
+
+
+                </div>
+
+                <!-- LikeList Modal -->
+                <div class="modal fade" id="likes<?php echo $post['id'] ?>" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Likes</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <?php if (!empty($likes)): ?>
+                                    <?php foreach ($likes as $follower): ?>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <img src="assets/images/Profile/<?= $follower['profile_pic'] ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                                                <div class="ms-2">
+                                                    <strong><?= $follower['first_name'] . ' ' . $follower['last_name'] ?></strong>
+                                                    <div class="text-muted">@<?= $follower['username'] ?></div>
+                                                </div>
+                                            </div>
+                                            <?php if ($user['id'] != $follower['id']) { ?>
+                                                <div class="d-flex gap-2 align-items-center my-1">
+                                                    <?php if (isFollowed($follower['id'])) { ?>
+                                                        <button class="btn btn-sm btn-danger follow-action" data-user-id="<?= $follower['id'] ?>" data-action="unfollow">Unfollow</button>
+                                                    <?php } else { ?>
+                                                        <button class="btn btn-sm btn-primary follow-action" data-user-id="<?= $follower['id'] ?>" data-action="follow">Follow</button>
+                                                    <?php } ?>
+                                                </div>
+                                            <?php } ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="text-muted">No likes yet.</p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
         <?php
@@ -55,6 +152,7 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
         }
         ?>
     </div>
+
 
 
     <style>
@@ -114,6 +212,9 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
     </div>
 
 </div>
+
+
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 
@@ -205,7 +306,7 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                         button.removeClass('bi-heart-fill').addClass('bi-heart').css('color', '');
                     }
 
-                    $('.likes-count[data-post-id="' + postId + '"]').text(res.likes_count + ' Likes');
+                    $('.likes-count[data-post-id="' + postId + '"]').text(res.likes_count + ' likes');
                 }
             },
             error: function() {
@@ -213,5 +314,54 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                 alert("AJAX request failed!");
             }
         });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        $(document).on('click', '.toggle-comments', function() {
+            var postId = $(this).data('post-id');
+            var showMore = $(this).data('show-more');
+            var commentSection = $('#comment-section-' + postId);
+
+            if (showMore) {
+                commentSection.find('.comment.d-none').removeClass('d-none');
+                $(this).data('show-more', false).text('Show less...');
+            } else {
+                commentSection.find('.comment').each(function(index) {
+                    if (index >= <?= $maxVisible ?>) {
+                        $(this).addClass('d-none');
+                    }
+                });
+                $(this).data('show-more', true).text('Show more...');
+            }
+        });
+    });
+</script>
+<script>
+    $(document).on('click', '.delete-comment', function() {
+        var comment_id = $(this).data('comment-id');
+        var post_id = $(this).data('post-id');
+
+        $.ajax({
+            url: 'assets/php/delete_comment.php',
+            type: 'POST',
+            data: {
+                comment_id: comment_id,
+                post_id: post_id
+            },
+            success: function(response) {
+                console.log("Response from server:", response);
+                if (response === "Comment deleted successfully") {
+                    $('[data-comment-id="' + comment_id + '"]').remove();
+                } else {
+                    alert(response);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log("AJAX error:", error);
+                alert("An error occurred while deleting the comment.");
+            }
+        });
+
     });
 </script>
