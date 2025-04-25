@@ -28,8 +28,12 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                     <div class="card-title d-flex justify-content-between align-items-center">
                         <a href="?u=<?php echo $post['username']; ?>" class="d-flex align-items-center text-decoration-none text-black p-2">
                             <img src="assets/images/Profile/<?php echo $post['profile_pic'] ?>" alt="" height="30" style="height: 30px; width:30px; object-fit:cover;" class="rounded-circle border">
-                            &nbsp;&nbsp;<?php echo $post['first_name'] ?> <?php echo $post['last_name'] ?>
+                            <div class="ms-2">
+                                <div><?php echo $post['first_name'] ?> <?php echo $post['last_name'] ?></div>
+                                <small class="text-muted"><?= date("d M Y, h:i A", strtotime($post['created_at'])) ?></small>
+                            </div>
                         </a>
+
                         <div class="p-2">
                             <i class="bi bi-three-dots-vertical"></i>
                         </div>
@@ -39,7 +43,10 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                         <i class="d-block me-3 bi <?= $alreadyLiked ? 'bi-heart-fill' : 'bi-heart' ?> like_btn"
                             data-post-id="<?= $post['id'] ?>"
                             style="cursor: pointer; <?= $alreadyLiked ? 'color: red;' : '' ?>"></i>
-                        <i class="d-block bi bi-chat" style="margin-top: -4px;"></i>
+
+                        <i class="d-block bi bi-chat" style="margin-top: -4px;"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal" data-post-id="<?= $post['id'] ?>"></i>
+
                     </h4>
                     <span class="likes-count d-block border-bottom px-2"
                         style="font-size: 17px; letter-spacing: 1px;"
@@ -78,7 +85,7 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
 
                     <?php if (!empty($comments)): ?>
                         <div class="px-3 pb-2 comment-section" id="comment-section-<?= $post['id'] ?>">
-                          
+
 
                             <?php foreach ($comments as $index => $c): ?>
                                 <div class="d-flex align-items-start mb-2 border-bottom mb-2 pb-2 comment <?= $index >= $maxVisible ? 'd-none' : '' ?>" data-post-id="<?= $post['id'] ?>" data-comment-id="<?= $c['id'] ?>">
@@ -148,6 +155,43 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                         </div>
                     </div>
                 </div>
+
+                <!-- CommentsList Modal -->
+                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-body d-flex p-0">
+                                <div class="col-8">
+                                    <img id="modal-post-image" src="" class="w-100 rounded-start">
+                                </div>
+                                <div class="col-4 d-flex flex-column">
+                                    <div class="d-flex align-items-center p-2 border-bottom">
+                                        <div><img id="modal-profile-image" src="" alt="" height="50" style="height:50px; width:50px; object-fit:cover;" class="rounded-circle border"></div>
+                                        <div>&nbsp;&nbsp;&nbsp;</div>
+                                        <div class="d-flex flex-column justify-content-start align-items-center">
+                                            <h6 id="modal-username" style="margin: 0px;"></h6>
+                                            <p id="modal-userhandle" style="margin: 0px;" class="text-muted"></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex-fill align-self-stretch overflow-auto p-4" style="height: 100px;">
+                                        <!-- Comments will be loaded here dynamically -->
+                                    </div>
+
+
+                                    <form action="assets/php/add_comment.php" method="POST" class="input-group p-2 <?php echo !empty($post['post_text']) ? 'border-top' : ''; ?>">
+                                        <div class="input-group p-2 border-top">
+                                            <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
+                                            <input type="text" name="comment" class="form-control rounded-0 border-0" placeholder="Say something..." required>
+                                            <button class="btn btn-primary rounded border-0 ms-3" type="submit" name="submit_comment">Post</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
         <?php
             }
         } else {
@@ -369,4 +413,84 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
         });
 
     });
+</script>
+
+<script>
+    $(document).ready(function() {
+        $(".bi-chat").on("click", function() {
+            var postId = $(this).data("post-id");
+
+            loadPostDetails(postId);
+
+            $('#exampleModal').modal('show');
+        });
+    });
+
+    function loadPostDetails(postId) {
+        $.ajax({
+            url: 'assets/php/getPostDetails.php',
+            method: 'GET',
+            data: {
+                post_id: postId
+            },
+            success: function(response) {
+                console.log('Post Details Response:', response);
+
+                var postDetails = JSON.parse(response);
+                if (postDetails.error) {
+                    console.error(postDetails.error);
+                } else {
+                    $('#modal-post-image').attr('src', 'assets/images/Post/' + postDetails.post_img);
+                    $('#modal-profile-image').attr('src', 'assets/images/Profile/' + postDetails.profile_pic);
+                    $('#modal-username').text(postDetails.first_name + ' ' + postDetails.last_name);
+                    $('#modal-userhandle').text('@' + postDetails.username);
+
+                    loadPostComments(postId);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Failed to load post details', status, error);
+                console.log('Response:', xhr.responseText);
+            }
+        });
+    }
+
+    function loadPostComments(postId) {
+        $.ajax({
+            url: 'assets/php/getPostComments.php',
+            method: 'GET',
+            data: {
+                post_id: postId
+            },
+            success: function(response) {
+                var comments = JSON.parse(response);
+                var commentsHtml = '';
+
+
+                comments.forEach(function(comment) {
+                    var deleteButtonHtml = '';
+
+
+
+
+                    commentsHtml += `
+        <div class="d-flex align-items-start mb-2 border-bottom mb-2 pb-2 comment">
+            <img src="assets/images/Profile/${comment.profile_pic}" class="rounded-circle me-4 mt-2" width="30" height="30" style="object-fit: cover;">
+            <div>
+                <strong>${comment.first_name} ${comment.last_name}</strong>
+                <p class="m-0">${comment.comment}</p>
+                <small class="text-muted">${comment.created_at}</small>
+            </div>
+           
+        </div>
+    `;
+                });
+
+                $('.modal-body .flex-fill').html(commentsHtml);
+            },
+            error: function() {
+                console.error('Failed to load comments');
+            }
+        });
+    }
 </script>

@@ -68,13 +68,47 @@ $followingList = getFollowingList($profile['id']);
     <div class="gallery d-flex flex-wrap gap-3 mb-4 mt-3">
         <?php if (!empty($profile_post)): ?>
             <?php foreach ($profile_post as $post): ?>
+
                 <img src="assets/images/Post/<?= $post['post_img'] ?>" class="post-image" style="cursor: pointer;" width="400" data-bs-toggle="modal"
                     data-bs-target="#exampleModal"
-                    data-image="assets/images/Post/<?= $post['post_img'] ?>"
-                    data-username="<?= isset($user['username']) ? htmlspecialchars($user['username']) : 'Unknown' ?>"
-                    data-userhandle="<?= isset($user['username']) ? htmlspecialchars($user['username']) : 'No handle' ?>"
-                    data-userimage="<?= isset($user['profile_pic']) ? 'assets/images/Profile/' . htmlspecialchars($user['profile_pic']) : 'assets/images/default-profile.jpg' ?>" />
+                    data-post-id="<?php echo $post['id'] ?>"
+                    ?>
             <?php endforeach; ?>
+            <!-- CommentsList Modal -->
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-body d-flex p-0">
+                            <div class="col-8">
+                                <img id="modal-post-image" src="" class="w-100 rounded-start">
+                            </div>
+                            <div class="col-4 d-flex flex-column">
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div><img id="modal-profile-image" src="" alt="" height="50" style="height:50px; width:50px; object-fit:cover;" class="rounded-circle border"></div>
+                                    <div>&nbsp;&nbsp;&nbsp;</div>
+                                    <div class="d-flex flex-column justify-content-start align-items-center">
+                                        <h6 id="modal-username" style="margin: 0px;"></h6>
+                                        <p id="modal-userhandle" style="margin: 0px;" class="text-muted"></p>
+                                    </div>
+                                </div>
+                                <div class="flex-fill align-self-stretch overflow-auto p-4" style="height: 100px;">
+                                    <!-- Comments will be loaded here dynamically -->
+                                </div>
+
+
+                                <form action="assets/php/add_comment.php" method="POST" class="input-group p-2 <?php echo !empty($post['post_text']) ? 'border-top' : ''; ?>">
+                                    <div class="input-group p-2 border-top">
+                                        <input type="hidden" id="modal-post-id" name="post_id" value="<?= $post['id'] ?>">
+                                        <input type="text" name="comment" class="form-control rounded-0 border-0" placeholder="Say something..." required>
+                                        <button class="btn btn-primary rounded border-0 ms-3" type="submit" name="submit_comment">Post</button>
+                                    </div>
+                                </form>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         <?php else: ?>
             <div class="text-muted text-center w-100 py-5">
                 <i class="bi bi-image" style="font-size: 2rem;"></i><br>
@@ -83,50 +117,8 @@ $followingList = getFollowingList($profile['id']);
             </div>
         <?php endif; ?>
     </div>
-
-
-
-
 </div>
 
-
-
-<!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-body d-flex p-0">
-                <div class="col-8">
-                    <img id="modal-post-image" src="img/post2.jpg" class="w-100 rounded-start">
-                </div>
-
-                <div class="col-4 d-flex flex-column">
-                    <div class="d-flex align-items-center p-2 border-bottom">
-                        <div><img id="modal-profile-image" src="./img/profile.jpg" alt="" height="50" style="height:50px; width:50px; object-fit:cover;" class="rounded-circle border"></div>
-                        <div>&nbsp;&nbsp;&nbsp;</div>
-                        <div class="d-flex flex-column justify-content-start align-items-center">
-                            <h6 id="modal-username" style="margin: 0px;">Monu Giri</h6>
-                            <p id="modal-userhandle" style="margin: 0px;" class="text-muted">@oyeitsmg</p>
-                        </div>
-                    </div>
-
-                    <div class="flex-fill align-self-stretch overflow-auto" style="height: 100px;">
-                        <!-- Example comment blocks can go here -->
-                    </div>
-
-                    <div class="input-group p-2 border-top">
-                        <input type="text" id="comment-input" class="form-control rounded-0 border-0" placeholder="Say something..." aria-label="Recipient's username">
-                        <button class="btn btn-primary rounded border-0" type="button" id="comment-submit">Comment</button>
-                    </div>
-
-                </div>
-            </div>
-
-
-        </div>
-    </div>
-</div>
 
 
 
@@ -272,4 +264,87 @@ $followingList = getFollowingList($profile['id']);
             });
         });
     });
+</script>
+<script>
+    $(document).ready(function() {
+        $(".post-image").on("click", function() {
+            var postId = $(this).data("post-id");
+
+            loadPostDetails(postId);
+
+            // Update the hidden post_id input field in the modal form
+            $('#modal-post-id').val(postId);
+
+            $('#exampleModal').modal('show');
+        });
+    });
+
+    function loadPostDetails(postId) {
+        $.ajax({
+            url: 'assets/php/getPostDetails.php',
+            method: 'GET',
+            data: {
+                post_id: postId
+            },
+            success: function(response) {
+                console.log('Post Details Response:', response);
+
+                var postDetails = JSON.parse(response);
+                if (postDetails.error) {
+                    console.error(postDetails.error);
+                } else {
+                    $('#modal-post-image').attr('src', 'assets/images/Post/' + postDetails.post_img);
+                    $('#modal-profile-image').attr('src', 'assets/images/Profile/' + postDetails.profile_pic);
+                    $('#modal-username').text(postDetails.first_name + ' ' + postDetails.last_name);
+                    $('#modal-userhandle').text('@' + postDetails.username);
+
+                    loadPostComments(postId);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Failed to load post details', status, error);
+                console.log('Response:', xhr.responseText);
+            }
+        });
+    }
+
+
+    function loadPostComments(postId) {
+        $.ajax({
+            url: 'assets/php/getPostComments.php',
+            method: 'GET',
+            data: {
+                post_id: postId
+            },
+            success: function(response) {
+                var comments = JSON.parse(response);
+                var commentsHtml = '';
+
+
+                comments.forEach(function(comment) {
+                    var deleteButtonHtml = '';
+
+
+
+
+                    commentsHtml += `
+        <div class="d-flex align-items-start mb-2 border-bottom mb-2 pb-2 comment">
+            <img src="assets/images/Profile/${comment.profile_pic}" class="rounded-circle me-4 mt-2" width="30" height="30" style="object-fit: cover;">
+            <div>
+                <strong>${comment.first_name} ${comment.last_name}</strong>
+                <p class="m-0">${comment.comment}</p>
+                <small class="text-muted">${comment.created_at}</small>
+            </div>
+           
+        </div>
+    `;
+                });
+
+                $('.modal-body .flex-fill').html(commentsHtml);
+            },
+            error: function() {
+                console.error('Failed to load comments');
+            }
+        });
+    }
 </script>
