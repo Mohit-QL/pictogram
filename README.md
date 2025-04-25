@@ -71,11 +71,6 @@ Follow/Unfollow Users: Interact with other users by following or unfollowing the
 Notification Counter: Shows the count of unseen notifications on the bell icon.
 
 # 🔗 Links
-Live Demo: Pictogram Demo
-
-GitHub Repository: Pictogram Project on GitHub
-
-Documentation: API Documentation## 🔗 Links
 
 [![Live Demo](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://katherineoelsner.com/)
 
