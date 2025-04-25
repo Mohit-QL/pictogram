@@ -78,6 +78,8 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
 
                     <?php if (!empty($comments)): ?>
                         <div class="px-3 pb-2 comment-section" id="comment-section-<?= $post['id'] ?>">
+                          
+
                             <?php foreach ($comments as $index => $c): ?>
                                 <div class="d-flex align-items-start mb-2 border-bottom mb-2 pb-2 comment <?= $index >= $maxVisible ? 'd-none' : '' ?>" data-post-id="<?= $post['id'] ?>" data-comment-id="<?= $c['id'] ?>">
                                     <img src="assets/images/Profile/<?= $c['profile_pic'] ?>" class="rounded-circle me-4 mt-2" width="30" height="30" style="object-fit: cover;">
@@ -98,11 +100,12 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
                             <!-- Show More / Show Less Toggle -->
                             <?php if ($totalComments > $maxVisible): ?>
                                 <div class="text-center mt-3">
-                                    <a href="javascript:void(0);" class="text-primary toggle-comments text-decoration-none text-black" data-post-id="<?= $post['id'] ?>" data-show-more="true">Show more...</a>
+                                    <a href="javascript:void(0);" class="comment-counter text-primary toggle-comments text-decoration-none text-black" data-post-id="<?= $post['id'] ?>" data-show-more="true"> <strong><?= count($comments) ?></strong> Comment<?php echo (count($comments) > 1) ? 's' : ''; ?></a>
                                 </div>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>
+
 
 
 
@@ -318,21 +321,23 @@ $name = $user['first_name'] . ' ' . $user['last_name'];
 </script>
 <script>
     $(document).ready(function() {
-        $(document).on('click', '.toggle-comments', function() {
+        $('.toggle-comments').click(function() {
             var postId = $(this).data('post-id');
             var showMore = $(this).data('show-more');
-            var commentSection = $('#comment-section-' + postId);
+
+            var totalComments = <?= $totalComments ?>;
+            var visibleComments = $('#comment-section-' + postId + ' .comment:not(.d-none)').length;
+
+            $('#comment-section-' + postId + ' .comment').each(function(index) {
+                if (index >= <?= $maxVisible ?>) {
+                    $(this).toggleClass('d-none');
+                }
+            });
 
             if (showMore) {
-                commentSection.find('.comment.d-none').removeClass('d-none');
-                $(this).data('show-more', false).text('Show less...');
+                $(this).text('Show less...').data('show-more', false);
             } else {
-                commentSection.find('.comment').each(function(index) {
-                    if (index >= <?= $maxVisible ?>) {
-                        $(this).addClass('d-none');
-                    }
-                });
-                $(this).data('show-more', true).text('Show more...');
+                $(this).text(visibleComments + ' Comment' + (visibleComments > 1 ? 's' : '')).data('show-more', true);
             }
         });
     });
