@@ -1,23 +1,4 @@
 
-# Pictogram Project
-
-
-This is the Pictogram Project. A web application designed to manage and display user profiles, notifications, and posts with real-time functionality. This project is built with PHP, MySQL, and Bootstrap.
-
-# 📑 Table of Contents
-Project Description
-
-Technology Stack
-
-Folder Structure
-
-Setup Instructions
-
-Features
-
-Links
-
-Contributing
 
 # 📝 Project Description
 The Pictogram project allows users to create and manage profiles, post updates, follow other users, and receive notifications for actions such as follows, likes, and comments. The notifications are stored in the database and can be viewed in real-time.
