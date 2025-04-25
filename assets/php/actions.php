@@ -1,219 +1,219 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-require_once 'config.php';
-$db = mysqli_connect(hostname, username, password, database) or die("Error While Connectiong Database");
-if (!$db) {
-    die("Database connection failed: " . mysqli_connect_error());
-}
 require_once 'functions.php';
 require_once 'send_code.php';
 
-// SIGN UP
-if (isset($_GET['signup'])) {
-    $data = validateSignupForm($_POST);
-    if ($data['status']) {
-        if (addUser($_POST)) {
-            header("location: ../../?login");
-        } else {
-            echo "<script>alert('Error While User Registration');</script>";
-        }
-    } else {
-        $_SESSION['error'] = $data;
-        $_SESSION['formdata'] = $_POST;
-        header("location: ../../?signup");
+
+if(isset($_GET['test'])){
+ 
+}
+
+if(isset($_GET['block'])){
+    $user_id = $_GET['block'];
+    $user = $_GET['username']; 
+      if(blockUser($user_id)){
+          header("location:../../?u=$user");
+      }else{
+          echo "something went wrong";
+      }
+  
+    
+  }
+
+  if(isset($_GET['deletepost'])){
+    $post_id = $_GET['deletepost'];
+      if(deletePost($post_id)){
+          header("location:{$_SERVER['HTTP_REFERER']}");
+      }else{
+          echo "something went wrong";
+      }
+  
+    
+  }
+
+
+
+//for managaing signup
+if(isset($_GET['signup'])){
+$response=validateSignupForm($_POST);
+if($response['status']){
+    if(createUser($_POST)){
+    header('location:../../?login&newuser');
+    }else{
+        echo "<script>alert('somethihng is wrong')</script>";
     }
+   
+
+}else{
+    $_SESSION['error']=$response;
+    $_SESSION['formdata']=$_POST;
+    header("location:../../?signup");
+}
+    
 }
 
-// LOGIN
-if (isset($_GET['login'])) {
-    $data = validateLoginForm($_POST);
 
-    if ($data['status']) {
-        $user = $data['user'];
-        $_SESSION['auth'] = true;
-        $_SESSION['user'] = [
-            'id' => $user['id'],
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name'],
-            'email' => $user['email'],
-            'username' => $user['username'],
-            'gender' => $user['gender'],
-            'ac_status' => 0
-        ];
 
-        if ($data['user']['ac_status'] == 0) {
-            $_SESSION['code'] = $code = rand(111111, 999999);
-            sendCode($data['user']['email'], 'Verify Your Email', $code);
-        }
-        header("Location: ../../");
-        exit;
-    } else {
-        $_SESSION['error'] = $data;
-        $_SESSION['formdata'] = $_POST;
-        header("Location: ../../?login");
-        exit;
+//for managing login
+if(isset($_GET['login'])){
+
+  
+    $response=validateLoginForm($_POST);
+  
+    if($response['status']){
+     $_SESSION['Auth'] = true;
+     $_SESSION['userdata'] = $response['user'];
+
+     if($response['user']['ac_status']==0){
+     $_SESSION['code']=$code = rand(111111,999999);
+     sendCode($response['user']['email'],'Verify Your Email',$code);
+     }
+
+     header("location:../../");
+
+    }else{
+        $_SESSION['error']=$response;
+        $_SESSION['formdata']=$_POST;
+        header("location:../../?login");
     }
-}
-
-if (isset($_GET['resend_code'])) {
-    $_SESSION['code'] = $code = rand(111111, 999999);
-    sendCode($_SESSION['user']['email'], 'Verify Your Email', $code);
-    header('location: ../../?resended');
-}
-
-if (isset($_GET['verify_email'])) {
-    $usercode = $_POST['code'];
-    $code = $_SESSION['code'];
-    if ($code == $usercode) {
-        if (verifyEmail($_SESSION['user']['email'])) {
-            header("location: ../../");
-        } else {
-            echo "verifyEmail() Funtion Not Working";
-        }
-    } else {
-        $data['msg'] = "Incorrect Verification Code!!";
-        if (!$_POST['code']) {
-            $data['msg'] = "Please Enter 6 Digit Code!!";
-        }
-        $data['field'] = 'email_verify';
-        $_SESSION['error'] = $data;
-        $_SESSION['formdata'] = $_POST;
-        header("location: ../../");
+        
     }
+
+
+    if(isset($_GET['resend_code'])){
+       
+            $_SESSION['code']=$code = rand(111111,999999);
+            sendCode($_SESSION['userdata']['email'],'Verify Your Email',$code);
+            header('location:../../?resended');
+    }
+
+    if(isset($_GET['verify_email'])){
+       $user_code = $_POST['code'];
+       $code = $_SESSION['code'];
+       if($code==$user_code){
+       if(verifyEmail($_SESSION['userdata']['email'])){
+        header('location:../../');
+       }else{
+           echo "something is wrong";
+       }
+
+       }else{
+           $response['msg']='incorrect verifictaion code !';
+           if(!$_POST['code']){
+            $response['msg']='enter 6 digit code !';
+
+           }
+           $response['field']='email_verify';
+        $_SESSION['error']=$response;
+        header('location:../../');
+
+       }
+       
 }
 
-if (isset($_GET['logout'])) {
+
+if(isset($_GET['forgotpassword'])){
+    if(!$_POST['email']){
+        $response['msg']="enter your email id !";
+        $response['field']='email';
+        $_SESSION['error']=$response;
+        header('location:../../?forgotpassword');
+
+    }elseif(!isEmailRegistered($_POST['email'])){
+        $response['msg']="email id is not registered";
+        $response['field']='email';
+        $_SESSION['error']=$response;
+        header('location:../../?forgotpassword');
+
+    }else{
+          $_SESSION['forgot_email']=$_POST['email'];
+           $_SESSION['forgot_code']=$code = rand(111111,999999);
+            sendCode($_POST['email'],'Forgot Your Password ?',$code);
+            header('location:../../?forgotpassword&resended');
+    }
+
+
+}
+
+
+
+//for logout the user
+if(isset($_GET['logout'])){
     session_destroy();
-    header('location: ../../');
+    header('location:../../');
+
 }
 
-if (isset($_GET['forgot_password'])) {
-    if (empty($_POST['email'])) {
-        $response['msg'] = "Enter Your Email!!";
-        $response['field'] = "email";
-        $_SESSION['error'] = $response;
-        header('location: ../../?forgot_password');
-    } elseif (!emailExixt($_POST['email'])) {
-        $response['msg'] = "Email Is Not Registered!!";
-        $response['field'] = "email";
-        $_SESSION['error'] = $response;
-        header('location: ../../?forgot_password');
-    } else {
-        $_SESSION['forgot_email'] = $_POST['email'];
-        $code = rand(111111, 999999);
-        $_SESSION['forgot_code'] = $code;
-        echo $_SESSION['forgot_code'];
-        sendCode($_POST['email'], 'OTP For Forgot Your Password', $code);
-        header('location: ../../?forgot_password&resened');
-    }
-}
 
-// Verify Forgot Code
-if (isset($_GET['verify_code'])) {
-    $usercode = $_POST['code'];
+// for verify forgot code
+if(isset($_GET['verifycode'])){
+    $user_code = $_POST['code'];
     $code = $_SESSION['forgot_code'];
-    if ($code == $usercode) {
-        $_SESSION['auth_temp'] = true;
-        unset($_SESSION['forgot_code']);
-        header('location: ../../?forgot_password&verified=1');
-        exit();
-    } else {
-        $data['msg'] = "Incorrect Verification Code!!";
-        if (!$_POST['code']) {
-            $data['msg'] = "Please Enter 6 Digit Code!!";
+    if($code==$user_code){
+    $_SESSION['auth_temp']=true;
+     header('location:../../?forgotpassword');
+    }else{
+        $response['msg']='incorrect verifictaion code !';
+        if(!$_POST['code']){
+         $response['msg']='enter 6 digit code !';
+
         }
-        $data['field'] = 'email_verify';
-        $_SESSION['error'] = $data;
-        $_SESSION['formdata'] = $_POST;
-        header("location: ../../?forgot_password");
-        exit();
+        $response['field']='email_verify';
+     $_SESSION['error']=$response;
+     header('location:../../?forgotpassword');
+
     }
+    
 }
 
-if (isset($_GET['change_password'])) {
-    if (empty($_POST['password'])) {
-        $_SESSION['error'] = [
-            'msg' => "Enter Your New Password",
-            'field' => "password"
-        ];
-        header('Location: ../../?forgot_password');
-        exit();
+if(isset($_GET['changepassword'])){
+    if(!$_POST['password']){
+        $response['msg']="enter your new password";
+        $response['field']='password';
+        $_SESSION['error']=$response;
+        header('location:../../?forgotpassword');
+    }else{
+        resetPassword($_SESSION['forgot_email'],$_POST['password']);
+        session_destroy();
+        header('location:../../?reseted');
     }
 
-    $email = $_SESSION['forgot_email'] ?? null;
-    if (!$email) {
-        $_SESSION['error'] = [
-            'msg' => "Session expired. Please start over.",
-            'field' => "email"
-        ];
-        header('Location: ../../?forgot_password');
-        exit();
-    }
 
-    $result = resetPassword($email, $_POST['password']);
-
-    if ($result === true) {
-        unset($_SESSION['forgot_email']);
-        unset($_SESSION['auth_temp']);
-        unset($_SESSION['forgot_code']);
-        header('Location: ../../?reseted');
-        exit();
-    } else {
-        $_SESSION['error'] = [
-            'msg' => "Password update failed: " . $result,
-            'field' => "password",
-            'debug' => [
-                'email' => $email,
-                'password_length' => strlen($_POST['password'])
-            ]
-        ];
-        header('Location: ../../?forgot_password');
-        exit();
-    }
-}
-
-if (isset($_GET['update_profile'])) {
-    $data = validateUpdateProfile($_POST, $_FILES['profile_pic']);
-    if ($data['status']) {
-        if (updateUser($_POST, $_FILES['profile_pic'])) {
-            $_SESSION['success'] = 'Profile Updated';
-            header("Location: ../../?edit_profile");
-            exit();
-        } else {
-            $_SESSION['error'] = 'Error while updating profile';
-            header("Location: ../../?edit_profile");
-            exit();
-        }
-    } else {
-        $_SESSION['error'] = $data;
-        $_SESSION['formdata'] = $_POST;
-        header("Location: ../../?edit_profile");
-        exit();
-    }
 }
 
 
-if (isset($_GET['add_post'])) {
-    $response = validatePostImage($_FILES['post_image']);
+if(isset($_GET['updateprofile'])){
 
-    if ($response['status']) {
-        $post_added = addPost($_POST, $_FILES['post_image']);
+    $response=validateUpdateForm($_POST,$_FILES['profile_pic']);
 
-        if ($post_added) {
-            $_SESSION['success'] = "New post added successfully.";
-            header('Location: ../../?new_post_added');
-            exit();
-        } else {
-            $_SESSION['error'] = "Error while adding new post.";
-            header('Location: ../../');
-            exit();
+    if($response['status']){
+       
+        if(updateProfile($_POST,$_FILES['profile_pic'])){
+            header("location:../../?editprofile&success");
+
+        }else{
+            echo "something is wrong";
         }
-    } else {
-        $_SESSION['error'] = $response;
-        $_SESSION['formdata'] = $_POST;
-        header("Location: ../../");
-        exit();
+       
+    
+    }else{
+        $_SESSION['error']=$response;
+        header("location:../../?editprofile");
     }
+     
+}
+
+//for managing add post
+if(isset($_GET['addpost'])){
+   $response = validatePostImage($_FILES['post_img']);
+
+   if($response['status']){
+if(createPost($_POST,$_FILES['post_img'])){
+    header("location:../../?new_post_added");
+}else{
+    echo "something went wrong";
+}
+   }else{
+    $_SESSION['error']=$response;
+    header("location:../../");
+   }
 }

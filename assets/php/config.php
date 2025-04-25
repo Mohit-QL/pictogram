@@ -1,7 +1,7 @@
 <?php
 session_start();
-
-const hostname = "localhost";
-const username = "root";
-const password = "";
-const database = "pictogram";
+// mysqli database connection
+const DB_NAME = 'pictogram_2';
+const DB_HOST = 'localhost';
+const DB_USER = 'root';
+const DB_PASS = '';

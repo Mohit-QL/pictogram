@@ -1,496 +1,393 @@
 <?php
 global $user;
 global $posts;
-global $follow_suggestion;
-$name = $user['first_name'] . ' ' . $user['last_name'];
-
-// echo "<pre>";
-// print_r($user);
-// print_r("ID = " . $user['id']);
-// die();
-
-
+global $follow_suggestions;
 
 ?>
+<div class="container col-md-10 col-sm-12 col-lg-9 rounded-0 d-flex justify-content-between">
+    <div class="col-md-8 col-sm-12" style="max-width:93vw">
 
-<div class="container col-9 rounded-0 d-flex justify-content-between">
-    <div class="col-8">
+
         <?php
-        showError('post_image');
-        if (!empty($posts)) {
-            foreach ($posts as $post) {
-                $check = checkLike($post['id']);
-                $alreadyLiked = ($check['user']['ROW'] ?? 0) > 0;
-                $post['likes_count'] = getLikesCount($post['id']);
-                $likes = getPostLikes($post['id']);
+
+        showError('post_img');
+        if (count($posts) < 1) {
+            echo "<p style='width:93vw' class='p-2 bg-white border rounded text-center my-3 col-12'>Follow Someone or Add a new post</p>";
+        }
+        foreach ($posts as $post) {
+            $likes = getLikes($post['id']);
+            $comments = getComments($post['id']);
         ?>
-                <div class="card mt-4">
-                    <div class="card-title d-flex justify-content-between align-items-center">
-                        <a href="?u=<?php echo $post['username']; ?>" class="d-flex align-items-center text-decoration-none text-black p-2">
-                            <img src="assets/images/Profile/<?php echo $post['profile_pic'] ?>" alt="" height="30" style="height: 30px; width:30px; object-fit:cover;" class="rounded-circle border">
-                            <div class="ms-2">
-                                <div><?php echo $post['first_name'] ?> <?php echo $post['last_name'] ?></div>
-                                <small class="text-muted"><?= date("d M Y, h:i A", strtotime($post['created_at'])) ?></small>
-                            </div>
-                        </a>
+            <div class="card mt-4">
+                <div class="card-title d-flex justify-content-between  align-items-center">
 
-                        <div class="p-2">
-                            <i class="bi bi-three-dots-vertical"></i>
-                        </div>
+                    <div class="d-flex align-items-center p-2">
+                        <img src="assets/images/profile/<?= $post['profile_pic'] ?>" alt="" height="30" width="30" class="rounded-circle border">&nbsp;&nbsp;<a href='?u=<?= $post['username'] ?>' class="text-decoration-none text-dark"><?= $post['first_name'] ?> <?= $post['last_name'] ?></a>
                     </div>
-                    <img src="assets/images/Post/<?php echo $post['post_img'] ?>" class="" alt="Post Image" style="object-fit: contain; width: 100%;">
-                    <h4 style="font-size: x-larger" class="p-2 m-0 d-flex align-items-center">
-                        <i class="d-block me-3 bi <?= $alreadyLiked ? 'bi-heart-fill' : 'bi-heart' ?> like_btn"
-                            data-post-id="<?= $post['id'] ?>"
-                            style="cursor: pointer; <?= $alreadyLiked ? 'color: red;' : '' ?>"></i>
+                    <div class="p-2">
+                        <?php
+                        if ($post['uid'] == $user['id']) {
+                        ?>
 
-                        <i class="d-block bi bi-chat" style="margin-top: -4px;"
-                            data-bs-toggle="modal" data-bs-target="#exampleModal" data-post-id="<?= $post['id'] ?>"></i>
+                            <div class="dropdown">
 
-                    </h4>
-                    <span class="likes-count d-block border-bottom px-2"
-                        style="font-size: 17px; letter-spacing: 1px;"
-                        data-bs-toggle="modal"
-                        data-bs-target="#likes<?php echo $post['id']; ?>"
-                        data-post-id="<?php echo $post['id']; ?>">
-                        <?= $post['likes_count'] ?? 0 ?> likes
-                    </span>
+                                <i class="bi bi-three-dots-vertical" id="option<?= $post['id'] ?>" data-bs-toggle="dropdown" aria-expanded="false"></i>
 
-                    <?php if (!empty($post['post_text'])) { ?>
-                        <div class="card-body">
-                            <?php echo $post['post_text'] ?>
-                        </div>
-                    <?php } ?>
-
-                    <!-- Comment Form -->
-                    <form action="assets/php/add_comment.php" method="POST" class="input-group p-2 <?php echo !empty($post['post_text']) ? 'border-top' : ''; ?>">
-                        <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
-                        <input type="text" name="comment" class="form-control rounded-0 border-0 border-bottom mb-3 pb-3" placeholder="Say something..." required>
-                        <button class="btn btn-outline-primary rounded-0 border-0 border-bottom fs-5 ms-3 mb-3 px-5 py-2" type="submit" name="submit_comment">Post</button>
-                    </form>
-                    <style>
-                        .show-more-comments {
-                            display: inline-block;
-                            margin-top: 5px;
-                            cursor: pointer;
-                            font-size: 14px;
+                                <ul class="dropdown-menu" aria-labelledby="option<?= $post['id'] ?>">
+                                    <li><a class="dropdown-item" href="assets/php/actions.php?deletepost=<?= $post['id'] ?>"><i class="bi bi-trash-fill"></i> Delete Post</a></li>
+                                </ul>
+                            </div>
+                        <?php
                         }
-                    </style>
-                    <!-- Comment Display Section -->
-                    <?php
-                    $comments = getPostComments($post['id']);
-                    $totalComments = count($comments);
-                    $maxVisible = 1;
-                    ?>
+                        ?>
 
-                    <?php if (!empty($comments)): ?>
-                        <div class="px-3 pb-2 comment-section" id="comment-section-<?= $post['id'] ?>">
+                    </div>
+                </div>
+                <img src="assets/images/posts/<?= $post['post_img'] ?>" loading=lazy class="" alt="...">
+                <h4 style="font-size: x-larger" class="p-2 border-bottom d-flex">
+                    <span>
+                        <?php
+                        if (checkLikeStatus($post['id'])) {
+                            $like_btn_display = 'none';
+                            $unlike_btn_display = '';
+                        } else {
+                            $like_btn_display = '';
+                            $unlike_btn_display = 'none';
+                        }
+                        ?>
+                        <i class="bi bi-heart-fill unlike_btn text-danger" style="display:<?= $unlike_btn_display ?>" data-post-id='<?= $post['id'] ?>'></i>
+                        <i class="bi bi-heart like_btn" style="display:<?= $like_btn_display ?>" data-post-id='<?= $post['id'] ?>'></i>
 
+                    </span>
+                    &nbsp;&nbsp;<i
+                        class="bi bi-chat-left d-flex align-items-center"><span class="p-1 mx-2 text-small" style="font-size:small" data-bs-toggle="modal" data-bs-target="#postview<?= $post['id'] ?>"><?= count($comments) ?> comments</span></i>
 
-                            <?php foreach ($comments as $index => $c): ?>
-                                <div class="d-flex align-items-start mb-2 border-bottom mb-2 pb-2 comment <?= $index >= $maxVisible ? 'd-none' : '' ?>" data-post-id="<?= $post['id'] ?>" data-comment-id="<?= $c['id'] ?>">
-                                    <img src="assets/images/Profile/<?= $c['profile_pic'] ?>" class="rounded-circle me-4 mt-2" width="30" height="30" style="object-fit: cover;">
-                                    <div>
-                                        <strong><?= $c['first_name'] . ' ' . $c['last_name'] ?></strong>
-                                        <p class="m-0"><?= htmlspecialchars($c['comment']) ?></p>
-                                        <small class="text-muted"><?= date("d M Y, H:i", strtotime($c['created_at'])) ?></small>
-                                    </div>
-
-                                    <?php if ($user['id'] == $c['user_id']) { ?>
-                                        <div class="ms-auto pt-4 pe-3">
-                                            <a href="javascript:void(0);" class="text-danger ms-2 delete-comment text-decoration-none" data-comment-id="<?= $c['id'] ?>" data-post-id="<?= $post['id'] ?>">Delete</a>
-                                        </div>
-                                    <?php } ?>
-                                </div>
-                            <?php endforeach; ?>
-
-                            <!-- Show More / Show Less Toggle -->
-                            <?php if ($totalComments > $maxVisible): ?>
-                                <div class="text-center mt-3">
-                                    <a href="javascript:void(0);" class="comment-counter text-primary toggle-comments text-decoration-none text-black" data-post-id="<?= $post['id'] ?>" data-show-more="true"> <strong><?= count($comments) ?></strong> Comment<?php echo (count($comments) > 1) ? 's' : ''; ?></a>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
-
-
-
+                </h4>
+                <div>
+                    <span class="p-1 mx-2" data-bs-toggle="modal" data-bs-target="#likes<?= $post['id'] ?>"><span id="likecount<?= $post['id'] ?>"><?= count($likes) ?></span> likes</span>
+                    <span style="font-size:small" class="text-muted">Posted</span> <?= show_time($post['created_at']) ?>
 
                 </div>
+                <?php
+                if ($post['post_text']) {
+                ?>
+                    <div class="card-body">
+                        <?= $post['post_text'] ?>
+                    </div>
+                <?php
+                }
+                ?>
+                <div class="input-group p-2 <?= $post['post_text'] ? 'border-top' : '' ?>">
 
-                <!-- LikeList Modal -->
-                <div class="modal fade" id="likes<?php echo $post['id'] ?>" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Likes</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <input type="text" class="form-control rounded-0 border-0 comment-input" placeholder="say something.."
+                        aria-label="Recipient's username" aria-describedby="button-addon2">
+                    <button class="btn btn-outline-primary rounded-0 border-0 add-comment" data-page='wall' data-cs="comment-section<?= $post['id'] ?>" data-post-id="<?= $post['id'] ?>" type="button"
+                        id="button-addon2">Post</button>
+                </div>
+
+                <style>
+                    .show-more-comments {
+                        display: inline-block;
+                        margin-top: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                </style>
+                <!-- Comment Display Section -->
+                <?php
+                $comments = getPostComments($post['id']);
+                $totalComments = count($comments);
+                $maxVisible = 2; // You can adjust this value to control how many comments are visible by default
+                ?>
+
+                <?php if (!empty($comments)): ?>
+                    <div class="px-3 pb-2 comment-section" id="comment-section-<?= $post['id'] ?>">
+
+                        <?php foreach ($comments as $index => $c): ?>
+                            <div class="d-flex align-items-start mb-2 border-bottom mb-2 pb-2 comment <?= $index >= $maxVisible ? 'd-none' : '' ?>" data-post-id="<?= $post['id'] ?>" data-comment-id="<?= $c['id'] ?>">
+                                <img src="assets/images/Profile/<?= $c['profile_pic'] ?>" class="rounded-circle me-4 mt-2" width="30" height="30" style="object-fit: cover;">
+                                <div>
+                                    <strong><?= $c['first_name'] . ' ' . $c['last_name'] ?></strong>
+                                    <p class="m-0"><?= htmlspecialchars($c['comment']) ?></p>
+                                    <small class="text-muted"><?= date("d M Y, H:i", strtotime($c['created_at'])) ?></small>
+                                </div>
+
+                                <?php if ($user['id'] == $c['user_id']) { ?>
+                                    <div class="ms-auto pt-4 pe-3">
+                                        <a href="javascript:void(0);" class="text-danger ms-2 delete-comment text-decoration-none" data-comment-id="<?= $c['id'] ?>" data-post-id="<?= $post['id'] ?>">Delete</a>
+                                    </div>
+                                <?php } ?>
                             </div>
-                            <div class="modal-body">
-                                <?php if (!empty($likes)): ?>
-                                    <?php foreach ($likes as $follower): ?>
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <img src="assets/images/Profile/<?= $follower['profile_pic'] ?>" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
-                                                <div class="ms-2">
-                                                    <strong><?= $follower['first_name'] . ' ' . $follower['last_name'] ?></strong>
-                                                    <div class="text-muted">@<?= $follower['username'] ?></div>
-                                                </div>
+                        <?php endforeach; ?>
+
+                        <!-- Show More / Show Less Toggle -->
+                        <?php if ($totalComments > $maxVisible): ?>
+                            <div class="text-center mt-3">
+                                <a href="javascript:void(0);" class="comment-counter text-primary toggle-comments text-decoration-none text-black" data-post-id="<?= $post['id'] ?>" data-show-more="true">
+                                    <strong><?= $totalComments ?></strong> Comment<?= ($totalComments > 1 ? 's' : '') ?>
+                                </a>
+                            </div>
+                        <?php endif; ?>
+
+                    </div>
+                <?php endif; ?>
+
+
+            </div>
+            <div class="modal fade" id="postview<?= $post['id'] ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+
+                        <div class="modal-body d-md-flex p-0">
+                            <div class="col-md-8 col-sm-12">
+                                <img src="assets/images/posts/<?= $post['post_img'] ?>" style="max-height:90vh" class="w-100 overflow:hidden">
+                            </div>
+
+
+
+                            <div class="col-md-4 col-sm-12 d-flex flex-column">
+                                <div class="d-flex align-items-center p-2 border-bottom">
+                                    <div><img src="assets/images/profile/<?= $post['profile_pic'] ?>" alt="" height="50" width="50" class="rounded-circle border">
+                                    </div>
+                                    <div>&nbsp;&nbsp;&nbsp;</div>
+                                    <div class="d-flex flex-column justify-content-start">
+                                        <h6 style="margin: 0px;"><?= $post['first_name'] ?> <?= $post['last_name'] ?></h6>
+                                        <p style="margin:0px;" class="text-muted">@<?= $post['username'] ?></p>
+                                    </div>
+                                    <div class="d-flex flex-column align-items-end flex-fill">
+                                        <div class=""></div>
+                                        <div class="dropdown">
+                                            <span class="<?= count($likes) < 1 ? 'disabled' : '' ?>" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <?= count($likes) ?> likes
+                                            </span>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                                <?php
+                                                foreach ($likes as $like) {
+                                                    $lu = getUser($like['user_id']);
+                                                ?>
+                                                    <li><a class="dropdown-item" href="?u=<?= $lu['username'] ?>"><?= $lu['first_name'] . ' ' . $lu['last_name'] ?> (@<?= $lu['username'] ?>)</a></li>
+
+                                                <?php
+                                                }
+                                                ?>
+
+                                            </ul>
+                                        </div>
+                                        <div style="font-size:small" class="text-muted">Posted <?= show_time($post['created_at']) ?> </div>
+
+                                    </div>
+                                </div>
+
+
+                                <div class="flex-fill align-self-stretch overflow-auto" id="comment-section<?= $post['id'] ?>" style="height: 100px;">
+
+                                    <?php
+                                    if (count($comments) < 1) {
+                                    ?>
+                                        <p class="p-3 text-center my-2 nce">no comments</p>
+                                    <?php
+                                    }
+                                    foreach ($comments as $comment) {
+                                        $cuser = getUser($comment['user_id']);
+                                    ?>
+                                        <div class="d-flex align-items-center p-2">
+                                            <div><img src="assets/images/profile/<?= $cuser['profile_pic'] ?>" alt="" height="40" width="40" class="rounded-circle border">
                                             </div>
-                                            <?php if ($user['id'] != $follower['id']) { ?>
-                                                <div class="d-flex gap-2 align-items-center my-1">
-                                                    <?php if (isFollowed($follower['id'])) { ?>
-                                                        <button class="btn btn-sm btn-danger follow-action" data-user-id="<?= $follower['id'] ?>" data-action="unfollow">Unfollow</button>
-                                                    <?php } else { ?>
-                                                        <button class="btn btn-sm btn-primary follow-action" data-user-id="<?= $follower['id'] ?>" data-action="follow">Follow</button>
-                                                    <?php } ?>
-                                                </div>
-                                            <?php } ?>
+                                            <div>&nbsp;&nbsp;&nbsp;</div>
+                                            <div class="d-flex flex-column justify-content-start align-items-start">
+                                                <h6 style="margin: 0px;"><a href="?u=<?= $cuser['username'] ?>" class="text-decoration-none text-dark text-small text-muted">@<?= $cuser['username'] ?></a> - <?= $comment['comment'] ?></h6>
+                                                <p style="margin:0px;" class="text-muted">(<?= show_time($comment['created_at']) ?>)</p>
+                                            </div>
                                         </div>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <p class="text-muted">No likes yet.</p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- CommentsList Modal -->
-                <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-xl modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-body d-flex p-0">
-                                <div class="col-8">
-                                    <img id="modal-post-image" src="" class="w-100 rounded-start">
+                                    <?php
+                                    }
+                                    ?>
+
+
+
                                 </div>
-                                <div class="col-4 d-flex flex-column">
-                                    <div class="d-flex align-items-center p-2 border-bottom">
-                                        <div><img id="modal-profile-image" src="" alt="" height="50" style="height:50px; width:50px; object-fit:cover;" class="rounded-circle border"></div>
-                                        <div>&nbsp;&nbsp;&nbsp;</div>
-                                        <div class="d-flex flex-column justify-content-start align-items-center">
-                                            <h6 id="modal-username" style="margin: 0px;"></h6>
-                                            <p id="modal-userhandle" style="margin: 0px;" class="text-muted"></p>
-                                        </div>
-                                    </div>
-                                    <div class="flex-fill align-self-stretch overflow-auto p-4" style="height: 100px;">
-                                        <!-- Comments will be loaded here dynamically -->
-                                    </div>
-
-
-                                    <form action="assets/php/add_comment.php" method="POST" class="input-group p-2 <?php echo !empty($post['post_text']) ? 'border-top' : ''; ?>">
-                                        <div class="input-group p-2 border-top">
-                                            <input type="hidden" name="post_id" value="<?= $post['id'] ?>">
-                                            <input type="text" name="comment" class="form-control rounded-0 border-0" placeholder="Say something..." required>
-                                            <button class="btn btn-primary rounded border-0 ms-3" type="submit" name="submit_comment">Post</button>
-                                        </div>
-                                    </form>
+                                <div class="input-group p-2 border-top">
+                                    <input type="text" class="form-control rounded-0 border-0 comment-input" placeholder="say something.."
+                                        aria-label="Recipient's username" aria-describedby="button-addon2">
+                                    <button class="btn btn-outline-primary rounded-0 border-0 add-comment" data-cs="comment-section<?= $post['id'] ?>" data-post-id="<?= $post['id'] ?>" type="button"
+                                        id="button-addon2">Post</button>
                                 </div>
                             </div>
+
+
+
                         </div>
+
                     </div>
                 </div>
+            </div>
 
+            <div class="modal fade" id="likes<?= $post['id'] ?>" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Likes</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <?php
+                            if (count($likes) < 1) {
+                            ?>
+                                <p>Currently No Likes</p>
+                            <?php
+                            }
+                            foreach ($likes as $f) {
+
+                                $fuser = getUser($f['user_id']);
+                                $fbtn = '';
+                                if (checkBS($f['user_id'])) {
+                                    continue;
+                                } else if (checkFollowStatus($f['user_id'])) {
+                                    $fbtn = '<button class="btn btn-sm btn-danger unfollowbtn" data-user-id=' . $fuser['id'] . ' >Unfollow</button>';
+                                } else if ($user['id'] == $f['user_id']) {
+                                    $fbtn = '';
+                                } else {
+                                    $fbtn = '<button class="btn btn-sm btn-primary followbtn" data-user-id=' . $fuser['id'] . ' >Follow</button>';
+                                }
+                            ?>
+                                <div class="d-flex justify-content-between">
+                                    <div class="d-flex align-items-center p-2">
+                                        <div><img src="assets/images/profile/<?= $fuser['profile_pic'] ?>" alt="" height="40" width="40" class="rounded-circle border">
+                                        </div>
+                                        <div>&nbsp;&nbsp;</div>
+                                        <div class="d-flex flex-column justify-content-center">
+                                            <a href='?u=<?= $fuser['username'] ?>' class="text-decoration-none text-dark">
+                                                <h6 style="margin: 0px;font-size: small;"><?= $fuser['first_name'] ?> <?= $fuser['last_name'] ?></h6>
+                                            </a>
+                                            <p style="margin:0px;font-size:small" class="text-muted">@<?= $fuser['username'] ?></p>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <?= $fbtn ?>
+
+                                    </div>
+                                </div>
+                            <?php
+                            }
+                            ?>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
 
         <?php
-            }
-        } else {
-            echo '<div class="alert alert-info mt-4">No posts to show yet. Follow someone or create your own post!</div>';
         }
         ?>
+
+
+
     </div>
 
+    <div class="col-lg-4 col-sm-0 overflow-hidden mt-4 p-sm-0 p-md-3">
 
 
-    <style>
-        .follow-btn {
-            min-width: 100px;
-            padding: 5px 12px;
-            background-color: #0d6efd;
-            color: #fff;
-            border: none;
-            text-align: center;
-            transition: all 0.2s ease-in-out;
-        }
-
-        .follow-btn:hover {
-            background-color: #0b5ed7;
-        }
-    </style>
-
-    <div class="col-4 mt-4 p-3">
-
-        <a href="?u=<?php echo $user['username']; ?>" class="d-flex align-items-center text-decoration-none text-black p-2">
-            <div><img src="assets/images/Profile/<?php echo $user['profile_pic'] ?>" alt="" style="height: 60px;width: 60px;object-fit: cover;" class="rounded-circle border">
+        <div class="d-flex align-items-center p-2">
+            <div><img src="assets/images/profile/<?= $user['profile_pic'] ?>" alt="" height="60" width="60" class="rounded-circle border">
             </div>
             <div>&nbsp;&nbsp;&nbsp;</div>
             <div class="d-flex flex-column justify-content-center">
-                <h6 style="margin: 0px;"><?php echo $name; ?></h6>
-                <p style="" class="text-muted m-0">@<?php echo $user['username']; ?></p>
+                <a href='?u=<?= $user['username'] ?>' class="text-decoration-none text-dark">
+                    <h6 style="margin: 0px;"><?= $user['first_name'] ?> <?= $user['last_name'] ?></h6>
+                </a>
+                <p style="margin:0px;" class="text-muted">@<?= $user['username'] ?></p>
             </div>
-        </a>
+        </div>
+
 
         <div>
             <h6 class="text-muted p-2">You Can Follow Them</h6>
-
-            <?php if (count($follow_suggestion) < 1) { ?>
-                <p class="text-muted" style="padding: 8px;">No suggestions available right now. Maybe try later!</p>
-            <?php } else { ?>
-                <?php foreach ($follow_suggestion as $follow) { ?>
-                    <div class="d-flex justify-content-between">
-                        <div class="d-flex align-items-center">
-                            <a href="?u=<?php echo $follow['username']; ?>" class="d-flex align-items-center text-decoration-none text-black p-2">
-
-                                <div><img src="assets/images/Profile/<?php echo $follow['profile_pic']; ?>" alt="" style="height: 40px;width: 40px;object-fit: cover;" class="rounded-circle border"></div>
-                                <div>&nbsp;&nbsp;</div>
-                                <div class="d-flex flex-column justify-content-center">
-                                    <h6 style="margin: 0px;font-size: small;"><?php echo $follow['first_name'] . ' ' . $follow['last_name']; ?></h6>
-                                    <p style="margin:0px;font-size:small" class="text-muted">@<?php echo $follow['username']; ?></p>
-                                </div>
-                            </a>
+            <?php
+            foreach ($follow_suggestions as $suser) {
+            ?>
+                <div class="d-flex justify-content-between">
+                    <div class="d-flex align-items-center p-2">
+                        <div><img src="assets/images/profile/<?= $suser['profile_pic'] ?>" alt="" height="40" width="40" class="rounded-circle border">
                         </div>
-                        <div class="d-flex align-items-center">
-                            <button class="btn btn-sm btn-primary follow-btn" data-user-id="<?php echo $follow['id']; ?>">Follow</button>
+                        <div>&nbsp;&nbsp;</div>
+                        <div class="d-flex flex-column justify-content-center">
+                            <a href='?u=<?= $suser['username'] ?>' class="text-decoration-none text-dark">
+                                <h6 style="margin: 0px;font-size: small;"><?= $suser['first_name'] ?> <?= $suser['last_name'] ?></h6>
+                            </a>
+                            <p style="margin:0px;font-size:small" class="text-muted">@<?= $suser['username'] ?></p>
                         </div>
                     </div>
-                <?php } ?>
-            <?php } ?>
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-primary followbtn" data-user-id='<?= $suser['id'] ?>'>Follow</button>
+
+                    </div>
+                </div>
+            <?php
+            }
+
+            if (count($follow_suggestions) < 1) {
+                echo "<p class='p-2 bg-white border rounded text-center'>No Suggestions For You</p>";
+            }
+            ?>
+
+
+
+
         </div>
     </div>
-
 </div>
-
-
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-
-<!-- Your Follow AJAX Script -->
-<script>
-    $('.follow-btn').click(function() {
-        var userId = $(this).data('user-id');
-        var button = $(this);
-
-        $.ajax({
-            url: 'assets/php/follow_user.php',
-            method: 'POST',
-            data: {
-                user_id: userId
-            },
-            success: function(response) {
-                console.log("AJAX Response:", response);
-                if (response.trim() === "success") {
-                    button.text('Following');
-                } else {
-                    alert("Something went wrong! " + response);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.log("AJAX Error:", error);
-                alert("AJAX request failed!");
-            }
-        });
-    });
-
-    // $(document).on('click', '.like_btn', function() {
-    //     var postId = $(this).data('post-id');
-    //     var button = $(this);
-    //     var isLiked = button.hasClass('bi-heart-fill');
-
-    //     var url = isLiked ? 'assets/php/ajax.php?unlike' : 'assets/php/ajax.php?like';
-
-    //     button.attr('disabled', true);
-
-    //     $.ajax({
-    //         url: url,
-    //         method: 'POST',
-    //         data: {
-    //             post_id: postId
-    //         },
-    //         success: function(response) {
-    //             console.log("AJAX Response:", response);
-    //             button.attr('disabled', false);
-
-    //             let res = JSON.parse(response);
-    //             if (res.status) {
-    //                 if (res.liked) {
-    //                     button.removeClass('bi-heart').addClass('bi-heart-fill').css('color', 'red');
-    //                 } else {
-    //                     button.removeClass('bi-heart-fill').addClass('bi-heart').css('color', '');
-    //                 }
-    //             }
-    //         },
-    //         error: function() {
-    //             button.attr('disabled', false);
-    //             alert("AJAX request failed!");
-    //         }
-    //     });
-    // });
-
-    $(document).on('click', '.like_btn', function() {
-        var postId = $(this).data('post-id');
-        var button = $(this);
-        var isLiked = button.hasClass('bi-heart-fill');
-
-        var url = isLiked ? 'assets/php/ajax.php?unlike' : 'assets/php/ajax.php?like';
-
-        button.attr('disabled', true);
-
-        $.ajax({
-            url: url,
-            method: 'POST',
-            data: {
-                post_id: postId
-            },
-            success: function(response) {
-                button.attr('disabled', false);
-                let res = JSON.parse(response);
-
-                if (res.status) {
-                    if (res.liked) {
-                        button.removeClass('bi-heart').addClass('bi-heart-fill').css('color', 'red');
-                    } else {
-                        button.removeClass('bi-heart-fill').addClass('bi-heart').css('color', '');
-                    }
-
-                    $('.likes-count[data-post-id="' + postId + '"]').text(res.likes_count + ' likes');
-                }
-            },
-            error: function() {
-                button.attr('disabled', false);
-                alert("AJAX request failed!");
-            }
-        });
-    });
-</script>
 <script>
     $(document).ready(function() {
-        $('.toggle-comments').click(function() {
-            var postId = $(this).data('post-id');
-            var showMore = $(this).data('show-more');
+        $(document).ready(function() {
+            $('.toggle-comments').click(function() {
+                var postId = $(this).data('post-id');
+                var showMore = $(this).data('show-more');
 
-            var totalComments = <?= $totalComments ?>;
-            var visibleComments = $('#comment-section-' + postId + ' .comment:not(.d-none)').length;
+                var totalComments = <?= $totalComments ?>;
+                var visibleComments = $('#comment-section-' + postId + ' .comment:not(.d-none)').length;
 
-            $('#comment-section-' + postId + ' .comment').each(function(index) {
-                if (index >= <?= $maxVisible ?>) {
-                    $(this).toggleClass('d-none');
+                $('#comment-section-' + postId + ' .comment').each(function(index) {
+                    if (index >= <?= $maxVisible ?>) {
+                        $(this).toggleClass('d-none');
+                    }
+                });
+
+                if (showMore) {
+                    $(this).text('Show less...').data('show-more', false);
+                } else {
+                    $(this).text(visibleComments + ' Comment' + (visibleComments > 1 ? 's' : '')).data('show-more', true);
+                }
+            });
+        });
+        $(document).on('click', '.delete-comment', function() {
+            var comment_id = $(this).data('comment-id');
+            var post_id = $(this).data('post-id');
+
+            $.ajax({
+                url: 'assets/php/delete_comment.php',
+                type: 'POST',
+                data: {
+                    comment_id: comment_id,
+                    post_id: post_id
+                },
+                success: function(response) {
+                    console.log("Response from server:", response);
+                    if (response === "Comment deleted successfully") {
+                        $('[data-comment-id="' + comment_id + '"]').remove();
+                    } else {
+                        alert(response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log("AJAX error:", error);
+                    alert("An error occurred while deleting the comment.");
                 }
             });
 
-            if (showMore) {
-                $(this).text('Show less...').data('show-more', false);
-            } else {
-                $(this).text(visibleComments + ' Comment' + (visibleComments > 1 ? 's' : '')).data('show-more', true);
-            }
         });
     });
-</script>
-<script>
-    $(document).on('click', '.delete-comment', function() {
-        var comment_id = $(this).data('comment-id');
-        var post_id = $(this).data('post-id');
-
-        $.ajax({
-            url: 'assets/php/delete_comment.php',
-            type: 'POST',
-            data: {
-                comment_id: comment_id,
-                post_id: post_id
-            },
-            success: function(response) {
-                console.log("Response from server:", response);
-                if (response === "Comment deleted successfully") {
-                    $('[data-comment-id="' + comment_id + '"]').remove();
-                } else {
-                    alert(response);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.log("AJAX error:", error);
-                alert("An error occurred while deleting the comment.");
-            }
-        });
-
-    });
-</script>
-
-<script>
-    $(document).ready(function() {
-        $(".bi-chat").on("click", function() {
-            var postId = $(this).data("post-id");
-
-            loadPostDetails(postId);
-
-            $('#exampleModal').modal('show');
-        });
-    });
-
-    function loadPostDetails(postId) {
-        $.ajax({
-            url: 'assets/php/getPostDetails.php',
-            method: 'GET',
-            data: {
-                post_id: postId
-            },
-            success: function(response) {
-                console.log('Post Details Response:', response);
-
-                var postDetails = JSON.parse(response);
-                if (postDetails.error) {
-                    console.error(postDetails.error);
-                } else {
-                    $('#modal-post-image').attr('src', 'assets/images/Post/' + postDetails.post_img);
-                    $('#modal-profile-image').attr('src', 'assets/images/Profile/' + postDetails.profile_pic);
-                    $('#modal-username').text(postDetails.first_name + ' ' + postDetails.last_name);
-                    $('#modal-userhandle').text('@' + postDetails.username);
-
-                    loadPostComments(postId);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Failed to load post details', status, error);
-                console.log('Response:', xhr.responseText);
-            }
-        });
-    }
-
-    function loadPostComments(postId) {
-        $.ajax({
-            url: 'assets/php/getPostComments.php',
-            method: 'GET',
-            data: {
-                post_id: postId
-            },
-            success: function(response) {
-                var comments = JSON.parse(response);
-                var commentsHtml = '';
-
-
-                comments.forEach(function(comment) {
-                    var deleteButtonHtml = '';
-
-
-
-
-                    commentsHtml += `
-        <div class="d-flex align-items-start mb-2 border-bottom mb-2 pb-2 comment">
-            <img src="assets/images/Profile/${comment.profile_pic}" class="rounded-circle me-4 mt-2" width="30" height="30" style="object-fit: cover;">
-            <div>
-                <strong>${comment.first_name} ${comment.last_name}</strong>
-                <p class="m-0">${comment.comment}</p>
-                <small class="text-muted">${comment.created_at}</small>
-            </div>
-           
-        </div>
-    `;
-                });
-
-                $('.modal-body .flex-fill').html(commentsHtml);
-            },
-            error: function() {
-                console.error('Failed to load comments');
-            }
-        });
-    }
 </script>
