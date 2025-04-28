@@ -31,7 +31,6 @@ $(".followbtn").click(function () {
         dataType: 'json',
         data: { user_id: user_id_v },
         success: function (response) {
-            console.log(response);
             if (response.status) {
                 $(button).data('userId', 0);
                 $(button).html('<i class="bi bi-check-circle-fill"></i> Followed')
@@ -52,7 +51,6 @@ $(".unfollowbtn").click(function () {
     var user_id_v = $(this).data('userId');
     var button = this;
     $(button).attr('disabled', true);
-    console.log('clicked');
     $.ajax({
         url: 'assets/php/ajax.php?unfollow',
         method: 'post',
@@ -88,7 +86,6 @@ $(".like_btn").click(function () {
         dataType: 'json',
         data: { post_id: post_id_v },
         success: function (response) {
-            console.log(response);
             if (response.status) {
 
                 $(button).attr('disabled', false);
@@ -167,7 +164,6 @@ $(".add-comment").click(function () {
         dataType: 'json',
         data: { post_id: post_id_v, comment: comment_v },
         success: function (response) {
-            console.log(response);
             if (response.status) {
 
                 $(button).attr('disabled', false);
@@ -218,7 +214,6 @@ $("#search").keyup(function () {
         dataType: 'json',
         data: { keyword: keyword_v },
         success: function (response) {
-            console.log(response);
             if (response.status) {
                 $("#sra").html(response.users);
 
@@ -270,14 +265,12 @@ $(".unblockbtn").click(function () {
     var user_id_v = $(this).data('userId');
     var button = this;
     $(button).attr('disabled', true);
-    console.log('clicked');
     $.ajax({
         url: 'assets/php/ajax.php?unblock',
         method: 'post',
         dataType: 'json',
         data: { user_id: user_id_v },
         success: function (response) {
-            console.log(response);
             if (response.status) {
                 location.reload();
             } else {
@@ -309,7 +302,6 @@ function popchat(user_id) {
 $("#sendmsg").click(function () {
     var user_id = chatting_user_id;
     var msg = $("#msginput").val();
-    console.log(user_id);
     if (!msg) return;
 
     $("#sendmsg").attr("disabled", true);
@@ -343,7 +335,6 @@ function synmsg() {
         dataType: 'json',
         data: { chatter_id: chatting_user_id },
         success: function (response) {
-            console.log(response);
             $("#chatlist").html(response.chatlist);
             if (response.newmsgcount == 0) {
                 $("#msgcounter").hide();
